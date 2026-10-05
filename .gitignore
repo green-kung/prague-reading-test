@@ -19,3 +19,6 @@ Thumbs.db
 .vscode/
 .idea/
 __pycache__/
+
+# ── 有版權、不可公開的材料（STAI 題目等）：只留在本機 ─────────────────────────
+*.local.js

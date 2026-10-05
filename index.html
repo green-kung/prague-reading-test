@@ -267,8 +267,7 @@
 <div id="setup">
   <div class="box">
     <h1>布拉格版閱讀測驗・開始畫面</h1>
-    <div class="lead">這個網站只有受試者畫面一頁，沒有伺服器、不連眼動儀。眼動請先在 Gazepoint 的軟體完成校正並開始錄製。<br>
-      按 Start 後進入全螢幕、交給受試者自己往下走；資料在結束時自動下載成一個 zip。</div>
+    <div class="lead">按 Start 後進入全螢幕、交給受試者自己往下走；資料在結束時自動下載成一個 zip。</div>
     <div class="row1">
       <label class="f" for="f-pid">受試者編號</label>
       <input id="f-pid" type="number" min="1" value="1">
@@ -286,6 +285,7 @@
 </div>
 
 <script src="materials.js"></script>
+<script src="stai-items.local.js" onerror="this.remove()"></script>  <!-- 本機專用 STAI 題目；GitHub 上沒有此檔，會維持佔位字 -->
 <script src="design.js"></script>
 <script src="store.js"></script>
 <script src="session.js"></script>
