@@ -1,0 +1,823 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Reading Test</title>
+<style>
+  /* 這個網站只有一頁（受試者畫面）：沒有研究者儀表板、沒有伺服器、不連眼動儀。
+     固定 1920×1080 版面；每回合把各區域的螢幕座標寫進 layout.csv，供事後在 Gazepoint 的眼動資料上劃興趣區域。
+     配色規則：不用紅、黃等警示色；強調色（青）與計時器色（深藍灰）刻意不同，避免搶走計時器的注意力；
+     計時器樣式在全部回合完全相同，條件間只差時限秒數（寬鬆／緊迫）與文本。
+     ★ 語言：開始畫面是研究者操作，用中文；按 Start 之後受試者看到的每一個畫面一律英語。 */
+  :root {
+    --ink: #1f2933;        /* 文本與題目字色 */
+    --muted: #64748b;
+    --line: #dbe2ea;       /* 卡片邊框 */
+    --page: #eef2f7;       /* 頁面底色（冷灰） */
+    --card: #ffffff;
+    --soft: #f6f8fb;       /* 題目卡片底色 */
+    --head: #0f1c2e;       /* 頂端標題列（深海軍藍） */
+    --accent: #0e7490;     /* 強調色：選取、送出按鈕 */
+    --accent-soft: #e6f4f7;
+    --timer: #3d5a78;      /* 計時器顏色，整回合不變色 */
+    --bg: #0f1c2e;
+    --warn: #b45309; --warn-soft: #fef3e2;
+    --bad: #b91c1c; --bad-soft: #fdecec;
+    --ok: #15803d;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { background: var(--bg); color: var(--ink); overflow: hidden; height: 100%;
+    font-family: "Inter", "Helvetica Neue", Helvetica, Arial, system-ui, sans-serif; }
+  button { font: inherit; }
+
+  #stage { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; overflow: hidden;
+    background: var(--page); transform-origin: 0 0; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 14px;
+    box-shadow: 0 1px 2px rgba(15, 28, 46, .04), 0 4px 16px rgba(15, 28, 46, .04); }
+  .scr { position: absolute; left: 0; top: 64px; width: 1920px; height: 1016px; display: none; }
+  .scr.on { display: block; }
+
+  /* 頂端標題列 y 0–64 */
+  #topbar { position: absolute; left: 0; top: 0; width: 1920px; height: 64px; background: var(--head);
+    color: #e2e8f0; display: flex; align-items: center; justify-content: space-between; padding: 0 48px; }
+  #topbar .brand { display: flex; align-items: center; gap: 14px; font-size: 22px; font-weight: 600; letter-spacing: 2px; }
+  #topbar .logo { width: 26px; height: 26px; border-radius: 7px; border: 2px solid #5eb8cc;
+    display: grid; place-items: center; }
+  #topbar .logo::after { content: ''; width: 8px; height: 8px; border-radius: 2px; background: #5eb8cc; }
+  #topbar .round { font-size: 18px; color: #94a3b8; letter-spacing: 1px; }
+  #topbar .round b { color: #e2e8f0; font-weight: 600; font-family: "SF Mono", Menlo, Consolas, monospace; }
+
+  /* ── 測驗畫面（座標皆為整張 1920×1080 版面座標；.scr 已下移 64px，故 top 減 64） ── */
+  /* 左欄：文本區 x 48–1048, y 96–1040
+     字級與行距：英文 22px／行距 1.7（行高約 37px）；一篇約 250 詞、4 段放得下，
+     超出時開始畫面的版面檢查會先警告 */
+  #text-area { position: absolute; left: 48px; top: 32px; width: 1000px; height: 944px; padding: 40px 48px; overflow: hidden; }
+  #text-area h1 { font-size: 30px; font-weight: 600; line-height: 1.4; margin-bottom: 22px; }
+  #text-area p { font-size: 22px; line-height: 1.7; margin-bottom: 12px; text-align: left; }
+
+  /* 右欄上方：計時器（時間標記）x 1088–1872, y 96–236 ── 數字倒數，全部回合樣式相同、持續顯示 */
+  #timer-card { position: absolute; left: 1088px; top: 32px; width: 784px; height: 140px;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; }
+  .timer-label { font-size: 18px; color: var(--muted); letter-spacing: 2px; text-transform: uppercase; }
+  #timer-num, #info-num { font-size: 60px; font-weight: 600; color: var(--timer); letter-spacing: 2px; line-height: 1.1;
+    font-variant-numeric: tabular-nums; font-family: "SF Mono", Menlo, Consolas, monospace; }
+
+  /* 右欄下方：作答區 x 1088–1872, y 260–1040（每篇 3 題 × 4 選項放得下） */
+  #answer-area { position: absolute; left: 1088px; top: 196px; width: 784px; height: 780px;
+    display: flex; flex-direction: column; gap: 12px; }
+  .q { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 14px 22px 16px; }
+  .q-stem { font-size: 19px; line-height: 1.4; margin-bottom: 8px; display: flex; gap: 10px; }
+  .q-no { flex: none; width: 30px; height: 30px; border-radius: 8px; background: var(--soft); border: 1px solid var(--line);
+    color: var(--muted); font-size: 16px; font-weight: 600; display: grid; place-items: center;
+    font-family: "SF Mono", Menlo, Consolas, monospace; }
+  .q.answered .q-no { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); }
+  /* 英文選項較長，單欄排列（不用兩欄，避免折行把選項擠成兩行） */
+  .q-opts { display: grid; grid-template-columns: 1fr; gap: 4px; padding-left: 40px; }
+  .q-opts label { font-size: 17px; line-height: 1.35; display: flex; gap: 10px; align-items: flex-start; cursor: pointer;
+    padding: 5px 12px; border: 1px solid transparent; border-radius: 8px; background: var(--soft); }
+  .q-opts label:has(input:checked) { background: var(--accent-soft); border-color: var(--accent); }
+  .q-opts input { width: 18px; height: 18px; accent-color: var(--accent); flex: none; margin-top: 3px; }
+  #submit-row { margin-top: auto; display: flex; align-items: center; justify-content: flex-end; gap: 22px; }
+  #progress { font-size: 18px; color: var(--muted); letter-spacing: 1px; }
+  #submit { font-size: 21px; font-weight: 600; letter-spacing: 2px;
+    padding: 12px 44px; border: none; border-radius: 10px; background: var(--accent); color: #fff; cursor: pointer; }
+
+  /* 送出確認 */
+  #confirm { position: absolute; inset: 0; background: rgba(15, 28, 46, .35); display: none;
+    align-items: center; justify-content: center; }
+  #confirm.on { display: flex; }
+  #confirm .card { width: 620px; padding: 40px 44px 32px; text-align: center; }
+  #confirm p { font-size: 24px; line-height: 1.6; margin-bottom: 8px; }
+  #confirm .sub { font-size: 19px; color: var(--muted); margin-bottom: 28px; }
+  .btns { display: flex; gap: 16px; justify-content: center; }
+  .btn { font-size: 20px; font-weight: 600; letter-spacing: 1px; padding: 11px 36px; border-radius: 10px; cursor: pointer;
+    border: 1px solid var(--line); background: var(--card); color: var(--ink); }
+  .btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .btn:disabled { opacity: .45; cursor: default; }
+
+  /* ── 中央訊息（Next／休息／結束）── */
+  .center { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 34px; text-align: center; padding: 0 240px; }
+  .center .big { font-size: 36px; line-height: 1.6; color: var(--ink); letter-spacing: .5px; }
+  .center .sub { font-size: 23px; line-height: 1.7; color: var(--muted); }
+  .center .btn { font-size: 24px; padding: 16px 64px; letter-spacing: 2px; }
+
+  /* ── 計時器說明畫面（練習回合之後約 10 秒）：計時器放在正式回合的同一個位置 ── */
+  #info-timer { position: absolute; left: 1088px; top: 32px; width: 784px; height: 140px;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; }
+  #info-text { position: absolute; left: 48px; top: 260px; width: 1000px; padding: 48px 56px;
+    font-size: 30px; line-height: 1.7; }
+  #info-text .sub { font-size: 21px; color: var(--muted); margin-top: 18px; line-height: 1.6; }
+  #info-arrow { position: absolute; left: 1088px; top: 188px; width: 784px; text-align: center;
+    font-size: 19px; color: var(--muted); letter-spacing: 1px; }
+
+  /* ── 前導模式的自估時間題 ── */
+  #est-card { position: absolute; left: 410px; top: 230px; width: 1100px; padding: 56px 64px; }
+  #est-card h2 { font-size: 30px; font-weight: 600; line-height: 1.5; margin-bottom: 14px; }
+  #est-card p { font-size: 21px; color: var(--muted); line-height: 1.6; margin-bottom: 30px; }
+  #est-row { display: flex; align-items: center; gap: 16px; }
+  #est-input { font-size: 30px; padding: 10px 18px; width: 220px; border: 1px solid var(--line); border-radius: 10px;
+    background: var(--soft); font-family: "SF Mono", Menlo, Consolas, monospace; }
+  #est-unit { font-size: 22px; color: var(--muted); margin-right: auto; }
+
+  /* ── 量表 ── */
+  #q-card { position: absolute; left: 260px; top: 32px; width: 1400px; height: 944px; display: flex; flex-direction: column; }
+  #q-head { padding: 32px 48px 20px; border-bottom: 1px solid var(--line); }
+  #q-head h2 { font-size: 28px; font-weight: 600; margin-bottom: 8px; }
+  #q-head p { font-size: 20px; color: var(--muted); line-height: 1.6; }
+  #q-body { flex: 1; overflow-y: auto; padding: 8px 48px 24px; }
+  #q-foot { padding: 18px 48px; border-top: 1px solid var(--line); display: flex; align-items: center; justify-content: space-between; }
+  #q-step { font-size: 18px; color: var(--muted); letter-spacing: 1px; }
+  .item { padding: 20px 0; border-bottom: 1px solid var(--soft); }
+  .item.missing { background: var(--accent-soft); margin: 0 -20px; padding: 20px; border-radius: 10px; }
+  .item-text { font-size: 21px; line-height: 1.6; margin-bottom: 14px; display: flex; gap: 12px; }
+  .item-no { flex: none; color: var(--muted); font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 17px; padding-top: 3px; min-width: 30px; }
+  .lik { display: flex; gap: 10px; padding-left: 42px; flex-wrap: wrap; }
+  .lik button { min-width: 150px; font-size: 19px; padding: 9px 18px; border-radius: 9px; border: 1px solid var(--line);
+    background: var(--soft); color: var(--ink); cursor: pointer; }
+  .lik button.sel { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); font-weight: 600; }
+  /* NASA-TLX：21 刻度量尺 */
+  .tlx { padding-left: 42px; }
+  .tlx-label { font-size: 19px; font-weight: 600; margin-bottom: 4px; }
+  .tlx-scale { position: relative; height: 54px; width: 1080px; margin: 6px 0 4px; }
+  .tlx-scale::before { content: ''; position: absolute; left: 0; right: 0; top: 26px; height: 2px; background: #94a3b8; }
+  .tlx-tick { position: absolute; top: 0; width: 51px; height: 54px; margin-left: -25.5px; cursor: pointer; background: none; border: none; }
+  .tlx-tick::before { content: ''; position: absolute; left: 25px; top: 14px; width: 2px; height: 26px; background: #94a3b8; }
+  .tlx-tick.mid::before { top: 8px; height: 38px; }
+  .tlx-tick.sel::after { content: ''; position: absolute; left: 15px; top: 16px; width: 22px; height: 22px; border-radius: 50%;
+    background: var(--accent); }
+  .tlx-ends { display: flex; justify-content: space-between; width: 1080px; font-size: 18px; color: var(--muted); }
+
+  /* ── 結束畫面右下角的「再下載一次」：刻意不顯眼 ── */
+  #redownload { position: absolute; right: 28px; bottom: 24px; font-size: 14px; color: #a8b4c4;
+    background: transparent; border: 1px solid #dde3ea; border-radius: 8px; padding: 6px 14px; cursor: pointer; }
+  #redownload:hover { color: var(--muted); border-color: var(--line); }
+  #dl-note { position: absolute; right: 28px; bottom: 60px; font-size: 13px; color: #a8b4c4; }
+
+  /* ══ 開始畫面（研究者操作，中文）：版面外的獨立層 ══ */
+  #setup { position: fixed; inset: 0; background: #0f1c2e; color: #e2e8f0; z-index: 20;
+    display: flex; align-items: center; justify-content: center; padding: 28px;
+    font-family: "PingFang TC", "Noto Sans TC", "Microsoft JhengHei", system-ui, sans-serif; }
+  #setup.off { display: none; }
+  #setup .box { width: min(860px, 100%); max-height: 100%; overflow-y: auto; background: #fff; color: var(--ink);
+    border-radius: 16px; padding: 30px 34px 26px; }
+  #setup h1 { font-size: 22px; font-weight: 600; letter-spacing: 1px; margin-bottom: 4px; }
+  #setup .lead { font-size: 13.5px; color: var(--muted); line-height: 1.6; margin-bottom: 18px; }
+  #setup .row1 { display: flex; align-items: center; gap: 18px; flex-wrap: wrap; margin-bottom: 14px; }
+  #setup label.f { font-size: 14px; color: var(--muted); }
+  #setup input[type=number] { font-size: 20px; width: 110px; padding: 7px 10px; border: 1px solid var(--line);
+    border-radius: 8px; background: var(--soft); font-family: "SF Mono", Menlo, Consolas, monospace; }
+  #setup .chk { display: flex; align-items: center; gap: 8px; font-size: 14px; cursor: pointer; }
+  #setup .chk input { width: 16px; height: 16px; accent-color: var(--accent); }
+  #setup table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+  #setup th { text-align: left; font-size: 12px; color: var(--muted); font-weight: 600; padding: 5px 6px;
+    border-bottom: 1px solid var(--line); white-space: nowrap; }
+  #setup td { padding: 5px 6px; border-bottom: 1px solid var(--soft); white-space: nowrap;
+    overflow: hidden; text-overflow: ellipsis; }
+  #setup td.mono { font-family: "SF Mono", Menlo, Consolas, monospace; }
+  #setup .note { font-size: 12.5px; color: var(--muted); margin-top: 8px; line-height: 1.6; }
+  #setup .msg { font-size: 13px; border-radius: 9px; padding: 10px 13px; margin-top: 12px; line-height: 1.65; white-space: pre-line; }
+  #setup .msg.err { background: var(--bad-soft); color: var(--bad); border: 1px solid #f5c2c2; }
+  #setup .msg.warn { background: var(--warn-soft); color: var(--warn); border: 1px solid #f5d9a8; }
+  #setup .msg.ok { background: #e7f6ec; color: var(--ok); border: 1px solid #9bd3ae; }
+  #setup .msg:empty { display: none; }
+  #start-btn { margin-top: 18px; width: 100%; font-size: 21px; font-weight: 600; letter-spacing: 3px;
+    padding: 14px; border: none; border-radius: 10px; background: var(--accent); color: #fff; cursor: pointer; }
+  #start-btn:disabled { opacity: .4; cursor: default; }
+  /* 版面檢查用的隱藏量測區（與文本區同寬同字級） */
+  #probe { position: absolute; left: -99999px; top: 0; width: 1000px; padding: 40px 48px; visibility: hidden; }
+  #probe h1 { font-size: 30px; font-weight: 600; line-height: 1.4; margin-bottom: 22px; }
+  #probe p { font-size: 22px; line-height: 1.7; margin-bottom: 12px; text-align: left; }
+</style>
+</head>
+<body>
+
+<div id="stage">
+  <header id="topbar">
+    <div class="brand"><span class="logo"></span>Reading Test</div>
+    <div class="round" id="round-label">Round <b id="round-now">1</b><span id="round-total"> / 6</span></div>
+  </header>
+
+  <!-- Next／休息／等待：共用同一個畫面 -->
+  <section class="scr on" id="scr-msg">
+    <div class="center">
+      <div class="big" id="msg-big">Please wait.</div>
+      <div class="sub" id="msg-sub"></div>
+      <button class="btn primary" id="msg-next">Next</button>
+    </div>
+  </section>
+
+  <section class="scr" id="scr-est">
+    <div id="est-card" class="card">
+      <h2 id="est-q"></h2>
+      <p>Give your best estimate. There is no right or wrong answer.</p>
+      <div id="est-row">
+        <input id="est-input" type="number" min="1" max="3600" step="1" inputmode="numeric">
+        <span id="est-unit">seconds</span>
+        <button class="btn primary" id="est-next">Continue</button>
+      </div>
+    </div>
+  </section>
+
+  <section class="scr" id="scr-trial">
+    <section id="text-area" class="card"></section>
+    <section id="timer-card" class="card">
+      <div class="timer-label">Time remaining</div>
+      <div id="timer-num">00:00</div>
+    </section>
+    <section id="answer-area"></section>
+    <div id="confirm"><div class="card">
+      <p>Are you sure you want to submit?</p>
+      <div class="sub" id="confirm-sub"></div>
+      <div class="btns"><button class="btn" id="confirm-no">Back to questions</button><button class="btn primary" id="confirm-yes">Submit</button></div>
+    </div></div>
+  </section>
+
+  <section class="scr" id="scr-info">
+    <section id="info-timer" class="card">
+      <div class="timer-label">Time remaining</div>
+      <div id="info-num">00:10</div>
+    </section>
+    <div id="info-arrow">▲ here</div>
+    <section id="info-text" class="card">
+      During the test, the remaining time will be shown here.
+      <div class="sub">The clock counts down to zero. When it reaches zero, the round ends automatically and your answers are saved.</div>
+    </section>
+  </section>
+
+  <section class="scr" id="scr-q">
+    <div id="q-card" class="card">
+      <div id="q-head"><h2 id="q-title"></h2><p id="q-intro"></p></div>
+      <div id="q-body"></div>
+      <div id="q-foot"><span id="q-step"></span><button class="btn primary" id="q-next">Next</button></div>
+    </div>
+  </section>
+
+  <section class="scr" id="scr-end">
+    <div class="center">
+      <div class="big">All tasks are complete. Thank you for your participation.<br>The researcher will now talk with you briefly.</div>
+    </div>
+    <div id="dl-note"></div>
+    <button id="redownload">Download data again</button>
+  </section>
+</div>
+
+<!-- ══ 開始畫面（研究者操作，中文）══ -->
+<div id="setup">
+  <div class="box">
+    <h1>布拉格版閱讀測驗・開始畫面</h1>
+    <div class="lead">這個網站只有受試者畫面一頁，沒有伺服器、不連眼動儀。眼動請先在 Gazepoint 的軟體完成校正並開始錄製。<br>
+      按 Start 後進入全螢幕、交給受試者自己往下走；資料在結束時自動下載成一個 zip。</div>
+    <div class="row1">
+      <label class="f" for="f-pid">受試者編號</label>
+      <input id="f-pid" type="number" min="1" value="1">
+      <label class="chk"><input type="checkbox" id="f-pilot">前導模式（不限時、無量表，檔名加 PILOT_）</label>
+      <span class="f" id="design-info" style="margin-left:auto"></span>
+    </div>
+    <div id="order-box"></div>
+    <div class="note" id="order-note"></div>
+    <div class="msg err" id="m-err"></div>
+    <div class="msg warn" id="m-warn"></div>
+    <div class="msg ok" id="m-ok"></div>
+    <button id="start-btn">Start</button>
+  </div>
+  <div id="probe"></div>
+</div>
+
+<script src="materials.js"></script>
+<script src="design.js"></script>
+<script src="store.js"></script>
+<script src="session.js"></script>
+<script>
+const M = window.MATERIALS, SC = window.SCORING, D = window.DESIGN;
+const params = new URLSearchParams(location.search);
+const $ = id => document.getElementById(id);
+
+// ── 版面縮放：實驗螢幕應為 1920×1080；否則等比縮放置中 ──
+let view = { scale: 1, x: 0, y: 0 };
+function fit() {
+  const s = Math.min(innerWidth / 1920, innerHeight / 1080);
+  view = { scale: s, x: (innerWidth - 1920 * s) / 2, y: (innerHeight - 1080 * s) / 2 };
+  $('stage').style.transform = `translate(${view.x}px, ${view.y}px) scale(${s})`;
+}
+addEventListener('resize', fit);
+fit();
+
+const showScreen = id => document.querySelectorAll('.scr').forEach(s => s.classList.toggle('on', s.id === id));
+// 回合標籤：練習顯示 Practice；正式回合顯示 Round n / 總回合數（總數由順序表長度決定，不寫死）
+function setRound(r, total) {
+  $('round-label').style.visibility = r == null ? 'hidden' : 'visible';
+  if (r === 0) { $('round-now').textContent = 'Practice'; $('round-label').firstChild.textContent = ''; $('round-total').textContent = ''; }
+  else { $('round-label').firstChild.textContent = 'Round '; $('round-now').textContent = r; $('round-total').textContent = total ? ` / ${total}` : ''; }
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// 設定檔：推導 N、驗證順序表、展開某編號的回合順序
+// ══════════════════════════════════════════════════════════════════════════════
+const TIME_LABEL = { loose: '寬鬆', tight: '緊迫' };
+const typeLabel = t => (M.textTypeLabels || {})[t] || t;
+
+const CFG = (() => {
+  const out = { ok: false, errors: [], warnings: [], N: 0, types: [], rows: 0, byKey: {}, practice: null };
+  if (!M || !D) { out.errors.push('找不到 materials.js 或 design.js'); return out; }
+  const all = M.passages || {};
+  out.practice = all[D.practicePassage] || null;
+  if (!out.practice) out.errors.push(`找不到練習文本（design.js practicePassage: ${D.practicePassage}）`);
+  const formal = Object.keys(all).filter(k => all[k].textType && all[k].form).map(k => ({ key: k, ...all[k] }));
+  formal.forEach(p => { out.byKey[`${p.textType}${p.form}`] = p; });
+  out.types = [...new Set(formal.map(p => p.textType))].sort();
+  out.N = out.types.length;
+  if (!out.N) out.errors.push('materials.js 的 passages 沒有任何帶 textType／form 的正式文本');
+  out.types.forEach(t => ['A', 'B'].forEach(f => {
+    if (!out.byKey[`${t}${f}`]) out.errors.push(`文本類型 ${t} 缺少 ${f} 篇（passages 需有 ${t}${f}）`);
+  }));
+  // 順序表驗證：格數＝2N、每種「時間 × 文本類型」各一次、同一類型的 A／B 各一次
+  const sq = D.latinSquare || [];
+  out.rows = sq.length;
+  if (!sq.length) out.errors.push('design.js 的 latinSquare 是空的');
+  sq.forEach((row, i) => {
+    const n = `第 ${i + 1} 列`;
+    if (!Array.isArray(row)) return out.errors.push(`${n}不是陣列`);
+    if (row.length !== 2 * out.N) out.errors.push(`${n}有 ${row.length} 格，應為 ${2 * out.N} 格（2 × ${out.N} 種文本類型）`);
+    const conds = {}, forms = {};
+    row.forEach((c, j) => {
+      if (!Array.isArray(c) || c.length !== 3) return out.errors.push(`${n}第 ${j + 1} 格格式錯誤，應為 [時間, 文本類型, 篇別]`);
+      const [tm, ty, fm] = c;
+      if (!TIME_LABEL[tm]) out.errors.push(`${n}第 ${j + 1} 格的時間「${tm}」無效（只能是 loose 或 tight）`);
+      if (!out.types.includes(ty)) out.errors.push(`${n}第 ${j + 1} 格的文本類型「${ty}」不在 passages 中`);
+      if (!['A', 'B'].includes(fm)) out.errors.push(`${n}第 ${j + 1} 格的篇別「${fm}」無效（只能是 A 或 B）`);
+      if (!out.byKey[`${ty}${fm}`]) out.errors.push(`${n}第 ${j + 1} 格找不到文本 ${ty}${fm}`);
+      conds[`${tm}|${ty}`] = (conds[`${tm}|${ty}`] || 0) + 1;
+      forms[`${ty}|${fm}`] = (forms[`${ty}|${fm}`] || 0) + 1;
+    });
+    Object.entries(conds).forEach(([k, v]) => { if (v !== 1) {
+      const [tm, ty] = k.split('|'); out.errors.push(`${n}的「${TIME_LABEL[tm] || tm} × ${typeLabel(ty)}」出現 ${v} 次，應為 1 次`); } });
+    out.types.forEach(ty => ['A', 'B'].forEach(fm => {
+      const v = forms[`${ty}|${fm}`] || 0;
+      if (v !== 1) out.errors.push(`${n}的「${typeLabel(ty)} ${fm} 篇」出現 ${v} 次，應為 1 次`);
+    }));
+  });
+  formal.forEach(p => {
+    ['loose', 'tight'].forEach(t => {
+      if (!p.limit || p.limit[t] == null) out.warnings.push(`${p.key}（${p.title}）的${TIME_LABEL[t]}時限尚未填入`);
+    });
+    if (p.pilotMean_s == null) out.warnings.push(`${p.key}（${p.title}）的前導平均秒數 pilotMean_s 尚未填入，群體層級時間容忍度會留空`);
+  });
+  if (formal.some(p => p.demo) || (out.practice && out.practice.demo)) out.warnings.push('目前使用示範文本：正式文本尚未放入 materials.js');
+  out.ok = out.errors.length === 0;
+  return out;
+})();
+
+const wordsOf = p => (M.words ? M.words(p) : (p.paras || []).join(' ').split(/\s+/).length);
+// 展開某受試者編號的回合順序：編號 1 → 第 1 列，編號 (列數+1) → 回到第 1 列
+function expandOrder(pid) {
+  if (!CFG.ok) return null;
+  const rowIdx = ((pid - 1) % CFG.rows + CFG.rows) % CFG.rows;
+  const plan = D.latinSquare[rowIdx].map(([time, textType, form], i) => {
+    const p = CFG.byKey[`${textType}${form}`];
+    return { round: i + 1, time, textType, form, passageId: p.id || `${textType}${form}`,
+      passageTitle: p.title, words: wordsOf(p),
+      limit_s: (p.limit && p.limit[time] != null) ? p.limit[time] : null,
+      pilotMean_s: p.pilotMean_s == null ? null : p.pilotMean_s };
+  });
+  return { latinRow: rowIdx + 1, plan };
+}
+
+// 版面預檢：用與文本區同寬同字級的隱藏區塊量每一篇，先抓出會被裁掉的文本
+function precheckPassages() {
+  const probe = $('probe'), limitH = 944 - 80;      // 文本區高度扣掉上下內距
+  const bad = [];
+  Object.values(M.passages || {}).forEach(p => {
+    probe.innerHTML = `<h1>${p.title}</h1>` + (p.paras || []).map(t => `<p>${t}</p>`).join('');
+    if (probe.scrollHeight - 80 > limitH + 1) bad.push(`${p.id || p.title}（約 ${wordsOf(p)} 詞）`);
+  });
+  probe.innerHTML = '';
+  return bad;
+}
+
+// ── 開始畫面 ──
+let draft = null;
+function renderSetup() {
+  $('design-info').textContent = CFG.ok ? `${CFG.N} 類文本・${2 * CFG.N} 回合・順序表 ${CFG.rows} 列` : '設定檔有誤';
+  $('m-err').textContent = CFG.ok ? '' : '設定檔錯誤，無法開始：\n• ' + CFG.errors.join('\n• ');
+  const pilot = $('f-pilot').checked;
+  const pid = +$('f-pid').value || 1;
+  const r = expandOrder(pid);
+  draft = r;
+  if (!r) { $('order-box').innerHTML = ''; $('order-note').textContent = ''; $('start-btn').disabled = true; return; }
+  let h = '<table><tr><th>回合</th><th>時間</th><th>文本類型</th><th>篇名</th><th>時限</th></tr>';
+  r.plan.forEach((p, i) => {
+    h += `<tr><td class="mono">${i + 1}</td><td>${TIME_LABEL[p.time]}</td><td>${typeLabel(p.textType)}（${p.form}）</td>
+      <td title="${p.passageTitle}">${p.passageTitle}</td>
+      <td class="mono">${pilot ? '不限時' : (p.limit_s == null ? '⚠ 未填' : p.limit_s + ' 秒')}</td></tr>`;
+  });
+  h += '</table>';
+  $('order-box').innerHTML = h;
+  const rest = (D.restAfterRounds || []).filter(x => x < r.plan.length);
+  $('order-note').textContent = `編號 ${pid} → 順序表第 ${r.latinRow} 列（順序由設定檔決定，不提供手動調整；要換順序請改 design.js 的 latinSquare）`
+    + (rest.length ? `｜休息點：第 ${rest.join('、')} 回合之後（研究者按 Shift + Enter 繼續）` : '｜沒有設休息點');
+  const warn = CFG.warnings.filter(w => !pilot || !w.includes('時限尚未填入'));
+  const over = precheckPassages();
+  if (over.length) warn.unshift(`以下文本超出文本區、會被裁掉：${over.join('、')}（請縮短，或調整 index.html 的字級行距）`);
+  $('m-warn').textContent = warn.length ? '⚠ ' + warn.join('\n⚠ ') : '';
+  const stored = Store.list();
+  $('m-ok').textContent = stored.length
+    ? `瀏覽器裡暫存了 ${stored.length} 個場次（最新：${stored[0].name}）。資料只在這台電腦，不會上傳雲端。`
+    : '';
+  $('start-btn').disabled = !CFG.ok;
+}
+$('f-pid').oninput = renderSetup;
+$('f-pilot').onchange = renderSetup;
+
+// ══════════════════════════════════════════════════════════════════════════════
+// 受試者流程（按 Start 之後全部英語）
+// ══════════════════════════════════════════════════════════════════════════════
+const fmt = s => `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
+const passageFor = id => M.passages[id] || M.passages[D.practicePassage];
+const limitFor = (p, time) => (p && p.limit && p.limit[time] != null) ? +p.limit[time] : null;
+
+let current = null;        // 進行中的回合（可中止計時器）
+let stages = [], si = 0;   // 流程清單與目前位置
+
+function buildStages() {
+  const total = Session.total, pilot = Session.isPilot();
+  const out = [];
+  if ((D.preQuestionnaires || []).length) out.push({ type: 'questionnaires', context: 'pretest', list: D.preQuestionnaires });
+  out.push({ type: 'next', round: 0, practice: true });
+  out.push({ type: 'trial', round: 0 });
+  if (!pilot) out.push({ type: 'timerinfo' });
+  const rest = D.restAfterRounds || [];
+  for (let r = 1; r <= total; r++) {
+    out.push({ type: 'next', round: r });
+    out.push({ type: 'trial', round: r });
+    if (!pilot && (D.roundQuestionnaires || []).length) {
+      out.push({ type: 'questionnaires', context: 'round', round: r, list: D.roundQuestionnaires });
+    }
+    if (rest.includes(r) && r < total) out.push({ type: 'rest', after: r });
+  }
+  if ((D.postQuestionnaires || []).length) out.push({ type: 'questionnaires', context: 'posttest', list: D.postQuestionnaires });
+  out.push({ type: 'end' });
+  return out;
+}
+function nextStage() { si++; runStage(); }
+function runStage() {
+  const st = stages[si];
+  if (!st) return;
+  if (st.type === 'next') showNext(st);
+  else if (st.type === 'trial') runTrial(st.round);
+  else if (st.type === 'timerinfo') runTimerInfo();
+  else if (st.type === 'questionnaires') runQuestionnaires(st);
+  else if (st.type === 'rest') showRest(st);
+  else if (st.type === 'end') showEnd();
+}
+
+// ── Next 畫面（受試者自己按）──
+function showNext(st) {
+  if (current) { current.stop(); current = null; }
+  setRound(null);
+  showScreen('scr-msg');
+  $('msg-next').style.display = '';
+  if (st.practice) {
+    $('msg-big').textContent = 'Practice round';
+    $('msg-sub').textContent = 'You will read a short text and answer a few questions. There is no time limit in this round.';
+  } else {
+    $('msg-big').textContent = `Round ${st.round} of ${Session.total}`;
+    $('msg-sub').textContent = 'Read the text and answer the questions. The remaining time is shown on the right.';
+  }
+  $('msg-next').textContent = 'Next';
+  $('msg-next').onclick = () => { Session.log({ type: 'next_pressed', round: st.round }); nextStage(); };
+  $('msg-next').focus();
+}
+
+// ── 休息畫面：只有研究者按 Shift + Enter 才繼續 ──
+let restHandler = null;
+function showRest(st) {
+  if (current) { current.stop(); current = null; }
+  setRound(null);
+  showScreen('scr-msg');
+  $('msg-big').textContent = 'Please wait for the researcher.';
+  $('msg-sub').textContent = '';
+  $('msg-next').style.display = 'none';
+  Session.log({ type: 'rest_start', afterRound: st.after });
+  if (restHandler) removeEventListener('keydown', restHandler);
+  restHandler = e => {
+    if (e.key === 'Enter' && e.shiftKey) {
+      e.preventDefault();
+      removeEventListener('keydown', restHandler); restHandler = null;
+      Session.log({ type: 'rest_end', afterRound: st.after });
+      nextStage();
+    } else if (!e.shiftKey || e.key !== 'Enter') {
+      e.preventDefault();          // 受試者按其他鍵無效
+    }
+  };
+  addEventListener('keydown', restHandler);
+}
+
+// ── 版面紀錄（layout.csv）：各區域的螢幕座標 ──
+function screenOrigin() {
+  const sx = (window.screenX !== undefined ? window.screenX : window.screenLeft) || 0;
+  const sy = (window.screenY !== undefined ? window.screenY : window.screenTop) || 0;
+  return [sx + Math.max(0, (outerWidth - innerWidth) / 2), sy + Math.max(0, outerHeight - innerHeight)];
+}
+function layoutInfo(cfg, p) {
+  const [ox, oy] = screenOrigin();
+  const box = (el, region) => {
+    const r = el.getBoundingClientRect();
+    return { region, x: Math.round(r.left + ox), y: Math.round(r.top + oy),
+             w: Math.round(r.width), h: Math.round(r.height) };
+  };
+  const regions = [box($('text-area'), 'text'), box($('answer-area'), 'questions')];
+  if (cfg.timed) regions.push(box($('timer-card'), 'timer'));
+  const ta = $('text-area');
+  return { passageId: cfg.passageId, passageTitle: p.title, demoPassage: !!p.demo,
+    words: M.words(p), nItems: p.questions.length, regions,
+    overflow: ta.scrollHeight > ta.clientHeight + 1,
+    viewport_w: innerWidth, viewport_h: innerHeight, screen_w: screen.width, screen_h: screen.height,
+    scale: +view.scale.toFixed(4), fullscreen: !!document.fullscreenElement };
+}
+
+function render(cfg) {
+  const p = passageFor(cfg.passageId);
+  setRound(cfg.round, Session.total);
+  $('text-area').innerHTML = `<h1>${p.title}</h1>` + p.paras.map(t => `<p>${t}</p>`).join('');
+  $('answer-area').innerHTML = p.questions.map((q, i) => `
+    <div class="q" id="q${i}"><div class="q-stem"><span class="q-no">${i + 1}</span><span>${q.stem}</span></div><div class="q-opts">
+      ${q.opts.map((o, j) => `<label><input type="radio" name="q${i}" value="${j}">${'ABCD'[j]}. ${o}</label>`).join('')}
+    </div></div>`).join('') +
+    `<div id="submit-row"><span id="progress"></span><button id="submit">Submit</button></div>`;
+  $('timer-card').style.visibility = cfg.timed ? 'visible' : 'hidden';
+  $('timer-num').textContent = cfg.timed ? fmt(cfg.limit_s) : '00:00';
+  $('confirm').classList.remove('on');
+  updateProgress(p);
+  return p;
+}
+function updateProgress(p) {
+  const n = p.questions.filter((_, i) => document.querySelector(`input[name=q${i}]:checked`)).length;
+  $('progress').textContent = `${n} of ${p.questions.length} answered`;
+  p.questions.forEach((_, i) => $(`q${i}`).classList.toggle('answered', !!document.querySelector(`input[name=q${i}]:checked`)));
+  return n;
+}
+const paint = ms => { $('timer-num').textContent = fmt(Math.max(0, Math.ceil(ms / 1000))); };
+
+// 前導模式可選題：讀前自估所需秒數
+function askEstimate(cfg, then) {
+  const p = passageFor(cfg.passageId), words = M.words(p);
+  showScreen('scr-est');
+  $('est-q').textContent = `This passage has ${words} words. How many seconds do you think you will need to read it and answer the questions?`;
+  $('est-input').value = '';
+  setRound(cfg.round, Session.total);
+  setTimeout(() => $('est-input').focus(), 50);
+  const go = () => {
+    const v = parseInt($('est-input').value, 10);
+    if (!(v > 0)) { $('est-input').focus(); return; }
+    Session.estimate(cfg.round, { passageId: cfg.passageId, words, est_s: v });
+    then();
+  };
+  $('est-next').onclick = go;
+  $('est-input').onkeydown = e => { if (e.key === 'Enter') go(); };
+}
+
+function runTrial(r) {
+  if (current) current.stop();
+  const plan = r === 0 ? null : Session.plan[r - 1];
+  const pilot = Session.isPilot();
+  const cfg = r === 0
+    ? { round: 0, passageId: (Session.state.session.practice || {}).passageId, time: null, textType: null, form: null, timed: false }
+    : { round: r, passageId: plan.passageId, time: plan.time, textType: plan.textType, form: plan.form, timed: !pilot };
+  const p0 = passageFor(cfg.passageId);
+  cfg.limit_s = cfg.timed ? limitFor(p0, cfg.time) : null;
+  if (cfg.timed && cfg.limit_s == null) {   // 設定檔尚未填入秒數：改為不限時，避免整個回合卡住
+    cfg.timed = false;
+    Session.log({ type: 'warning', round: r, text: `passage ${cfg.passageId} has no ${cfg.time} limit; round runs untimed` });
+  }
+  Session.startRound(r, cfg);
+  const askEst = pilot && !!D.pilotEstimate;
+  const begin = () => {
+    showScreen('scr-trial');
+    const p = render(cfg);
+    const t0 = performance.now();
+    const rel = () => Math.round(performance.now() - t0);
+    const picked = {};
+    let done = false, raf, guard;
+    const marks = (D.timeMarks || []).map(f => ({ f, name: `time_${Math.round(f * 100)}`, hit: false }));
+
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      Session.recordLayout(r, layoutInfo(cfg, p));
+      Session.trialStart(r, { time: cfg.time, textType: cfg.textType, form: cfg.form, passageId: cfg.passageId,
+        limit_s: cfg.limit_s, timed: cfg.timed, words: M.words(p), nItems: p.questions.length });
+    }));
+
+    // ★ 用 onchange（而非 addEventListener）：#answer-area 每回合只換內容、元素本身不換，
+    //   若每回合都 addEventListener，舊回合的處理器會留著，造成同一次作答被重複記成多個回合的事件。
+    $('answer-area').onchange = e => {
+      const qi = +e.target.name.slice(1), opt = 'ABCD'[e.target.value];
+      const prev = picked[qi + 1];
+      picked[qi + 1] = opt;
+      const answered = updateProgress(p);
+      Session.readingClick(r, { q: qi + 1, opt, correct: +e.target.value === p.questions[qi].ans,
+        prevOpt: prev && prev !== opt ? prev : null, t_ms: rel(), answered });
+    };
+
+    const finish = reason => {
+      if (done) return; done = true; cancelAnimationFrame(raf); clearInterval(guard);
+      const answers = p.questions.map((q, i) => {
+        const el = document.querySelector(`input[name=q${i}]:checked`);
+        return el ? +el.value : null;                                   // 未作答記為 null，計 0 分
+      });
+      const correct = answers.filter((a, i) => a === p.questions[i].ans).length;
+      // 時間到者作答時間即為時限；另存實際經過時間供核對
+      Session.trialEnd(r, { endReason: reason, t_ms: rel(),
+        rt_s: reason === 'timeout' ? cfg.limit_s : +(rel() / 1000).toFixed(3),
+        elapsed_s: +(rel() / 1000).toFixed(3),
+        answers: answers.map(a => a === null ? null : 'ABCD'[a]),
+        correctFlags: answers.map((a, i) => a === p.questions[i].ans),
+        correct, nItems: answers.length, accuracy: +(correct / answers.length).toFixed(3),
+        passageTitle: p.title, words: M.words(p) });
+      current = null;
+      nextStage();
+    };
+
+    $('submit').onclick = () => {
+      const left = p.questions.length - updateProgress(p);
+      $('confirm-sub').textContent = left
+        ? `${left} question${left > 1 ? 's are' : ' is'} unanswered and will be scored as incorrect.`
+        : 'You cannot change your answers after submitting.';
+      $('confirm').classList.add('on');
+      Session.log({ type: 'submit_confirm_open', round: r, t_ms: rel(), unanswered: left });
+    };
+    $('confirm-no').onclick = () => { $('confirm').classList.remove('on'); Session.log({ type: 'submit_cancel', round: r, t_ms: rel() }); };
+    $('confirm-yes').onclick = () => { $('confirm').classList.remove('on'); finish('submit'); };
+
+    if (cfg.timed) {
+      const check = () => {
+        if (done) return;
+        const remain = cfg.limit_s * 1000 - (performance.now() - t0);
+        paint(remain);
+        // 時間點事件：剩餘時間到達比例時只記錄、畫面完全不變
+        marks.forEach(mk => {
+          if (!mk.hit && remain <= cfg.limit_s * 1000 * mk.f) {
+            mk.hit = true;
+            Session.timeMark(r, mk.name, { t_ms: rel(), remainFrac: mk.f, remain_s: +(Math.max(0, remain) / 1000).toFixed(3) });
+          }
+        });
+        if (remain <= 0) { $('confirm').classList.remove('on'); finish('timeout'); }  // 時間到自動結束
+      };
+      const step = () => { check(); if (!done) raf = requestAnimationFrame(step); };
+      step();
+      guard = setInterval(check, 200);   // 頁框暫停重繪時，仍準時記錄時間點與結束回合
+    }
+    current = { stop: () => { done = true; cancelAnimationFrame(raf); clearInterval(guard); } };
+  };
+  if (askEst) askEstimate(cfg, begin); else begin();
+}
+
+// ── 計時器說明畫面（練習之後約 10 秒，示範數字倒數）──
+function runTimerInfo() {
+  if (current) { current.stop(); current = null; }
+  const total = (Session.state.session || {}).timerInfoSeconds || 10;
+  setRound(null);
+  showScreen('scr-info');
+  Session.log({ type: 'timer_info_start', seconds: total });
+  const t0 = performance.now();
+  let fired = false;
+  const tick = () => {
+    if (fired) return;
+    const remain = total * 1000 - (performance.now() - t0);
+    $('info-num').textContent = fmt(Math.max(0, Math.ceil(remain / 1000)));
+    if (remain <= 0) { fired = true; Session.log({ type: 'timer_info_done' }); nextStage(); return; }
+    requestAnimationFrame(tick);
+  };
+  tick();
+  current = { stop: () => { fired = true; } };
+}
+
+// ── 量表 ──
+function runQuestionnaires(st) {
+  if (current) { current.stop(); current = null; }
+  const list = (st.list || []).slice();
+  setRound(st.context === 'round' ? st.round : null, Session.total);
+  showScreen('scr-q');
+  let k = 0;
+  const next = () => {
+    if (k >= list.length) { Session.log({ type: 'questionnaires_done', context: st.context, round: st.round }); nextStage(); return; }
+    const name = list[k], q = M.questionnaires[name];
+    if (!q) { k++; return next(); }
+    const ans = new Array(q.items.length).fill(null);
+    Session.questionnaireStart(name, st.context, st.round);
+    const t0 = performance.now();
+    const rel = () => Math.round(performance.now() - t0);
+    $('q-title').textContent = q.title;
+    $('q-intro').textContent = q.intro;
+    $('q-step').textContent = list.length > 1 ? `Questionnaire ${k + 1} of ${list.length}` : '';
+    $('q-next').textContent = k === list.length - 1 ? 'Finish' : 'Next';
+    $('q-body').scrollTop = 0;
+    $('q-body').innerHTML = q.items.map((it, i) => {
+      if (q.type === 'tlx') {
+        const ticks = Array.from({ length: 21 }, (_, j) =>
+          `<button class="tlx-tick${j === 10 ? ' mid' : ''}" data-i="${i}" data-v="${j}" style="left:${j * 54}px" aria-label="${j}"></button>`).join('');
+        return `<div class="item" id="it${i}"><div class="tlx"><div class="tlx-label">${it.label}</div>
+          <div class="item-text" style="padding-left:0">${it.text}</div>
+          <div class="tlx-scale">${ticks}</div><div class="tlx-ends"><span>${it.low}</span><span>${it.high}</span></div></div></div>`;
+      }
+      const opts = it.options || q.options;
+      return `<div class="item" id="it${i}"><div class="item-text"><span class="item-no">${i + 1}.</span><span>${it.text}</span></div>
+        <div class="lik">${opts.map((o, j) => `<button data-i="${i}" data-v="${j}">${o.t}</button>`).join('')}</div></div>`;
+    }).join('');
+    const optionText = (i, v) => q.type === 'tlx' ? String(v) : ((q.items[i].options || q.options)[v] || {}).t;
+    const scoreValue = (i, v) => q.type === 'tlx' ? v : ((q.items[i].options || q.options)[v] || {}).v;
+    // 量表的每一次點選也記一列（含是否為改答）
+    $('q-body').onclick = e => {
+      const b = e.target.closest('button[data-i]');
+      if (!b) return;
+      const i = +b.dataset.i, v = +b.dataset.v, prev = ans[i];
+      ans[i] = v;
+      $(`it${i}`).classList.remove('missing');
+      $(`it${i}`).querySelectorAll('button[data-i]').forEach(x => x.classList.toggle('sel', x === b));
+      Session.questionnaireClick({ name, context: st.context, round: st.round, item: i + 1,
+        itemLabel: q.items[i].key || q.items[i].label || (q.items[i].no !== undefined ? `item ${q.items[i].no}` : ''),
+        optionText: optionText(i, v), value: scoreValue(i, v),
+        isChange: prev !== null && prev !== v, prevOptionText: prev === null ? '' : optionText(i, prev),
+        t_ms: rel() });
+    };
+    $('q-next').onclick = () => {
+      const miss = ans.map((a, i) => a === null ? i : -1).filter(i => i >= 0);
+      if (miss.length) {
+        miss.forEach(i => $(`it${i}`).classList.add('missing'));
+        $(`it${miss[0]}`).scrollIntoView({ behavior: 'smooth', block: 'center' });
+        return;
+      }
+      const values = q.type === 'tlx' ? ans : ans.map((a, i) => (q.items[i].options || q.options)[a].v);
+      const score = (SC[name] || SC.peer)(values, q);
+      Session.questionnaireDone({ name, context: st.context, round: st.round, answers: ans, values, score, t_ms: rel() });
+      k++;
+      next();
+    };
+  };
+  next();
+}
+
+// ── 結束：自動下載，右下角留一個不顯眼的再下載按鈕 ──
+function showEnd() {
+  if (current) { current.stop(); current = null; }
+  setRound(null);
+  showScreen('scr-end');
+  const file = Session.end();
+  $('dl-note').textContent = file ? file : 'Download may have been blocked — use the button below.';
+  $('redownload').onclick = () => {
+    const f = Session.download();
+    $('dl-note').textContent = f || 'Download failed';
+  };
+}
+
+// ══ 啟動 ══
+if (params.has('freeze')) {
+  // 截圖模式：?freeze=60&passage=type1A&time=tight&picks=B,C（freeze＝剩餘秒數）
+  $('setup').classList.add('off');
+  const pid = params.get('passage') || 'type1A', time = params.get('time') || 'tight';
+  const cfg = { round: 1, passageId: pid, time, timed: true };
+  cfg.limit_s = +(params.get('limit') || limitFor(passageFor(pid), time) || 150);
+  showScreen('scr-trial');
+  const p = render(cfg);
+  paint(+params.get('freeze') * 1000);
+  (params.get('picks') || '').split(',').filter(Boolean).forEach((v, i) => {
+    const el = document.querySelector(`input[name=q${i}][value="${'ABCD'.indexOf(v)}"]`);
+    if (el) el.checked = true;
+  });
+  updateProgress(p);
+} else {
+  renderSetup();
+  $('start-btn').onclick = async () => {
+    if (!CFG.ok || !draft) return;
+    if (!params.has('nofs')) {
+      // 有些瀏覽器（如內嵌瀏覽器）全螢幕請求既不成功也不失敗，最多等 1 秒就繼續，避免卡在等待畫面
+      try {
+        await Promise.race([document.documentElement.requestFullscreen(), new Promise(r => setTimeout(r, 1000))]);
+      } catch (e) {}
+    }
+    fit();
+    const practice = CFG.practice;
+    Session.create({
+      pid: +$('f-pid').value || 1, pilot: $('f-pilot').checked,
+      latinRow: draft.latinRow, plan: draft.plan,
+      practice: { passageId: practice.id || D.practicePassage, title: practice.title, words: wordsOf(practice) },
+      design: D,
+    });
+    $('setup').classList.add('off');
+    stages = buildStages(); si = 0;
+    runStage();
+  };
+  document.addEventListener('fullscreenchange', () => {
+    fit();
+    if (Session.state.session) Session.log({ type: document.fullscreenElement ? 'fullscreen_enter' : 'fullscreen_exit',
+      viewport_w: innerWidth, viewport_h: innerHeight, screen_w: screen.width, screen_h: screen.height });
+  });
+  addEventListener('beforeunload', e => { if (Session.state.session && !stages[si]?.type?.match(/^end$/)) { e.preventDefault(); e.returnValue = ''; } });
+  addEventListener('contextmenu', e => e.preventDefault());
+  document.addEventListener('visibilitychange', () => {
+    if (Session.state.session) Session.log({ type: 'visibility', hidden: document.hidden });
+  });
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,21 @@
+# ── 受試者資料：一律不要進版本庫 ────────────────────────────────────────────────
+# 本網站的資料是自動下載到這台電腦的「下載」資料夾，不會寫進這個專案；
+# 但若把下載的 zip／解壓後的資料夾放進來分析，以下規則會擋住，避免不小心推上 GitHub。
+data/
+PILOT_*/
+P[0-9][0-9]_*/
+*.zip
+summary.csv
+answers.csv
+layout.csv
+questionnaires.csv
+events.jsonl
+session.json
+
+# 作業系統與編輯器
+.DS_Store
+Thumbs.db
+*.swp
+.vscode/
+.idea/
+__pycache__/
