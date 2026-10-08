@@ -179,7 +179,7 @@ window.MATERIALS = {
     // 狀態焦慮量表 6 題短版 (State-Trait Anxiety Inventory – State, 6-item short form;
     // Marteau & Bekker, 1992)：原 STAI-S 第 1、3、6、15、16、17 題。
     // 第 1、15、16 題反向計分；6 題總分 × 20 ÷ 6 換算為完整版分數（20–80）。
-    // ★ STAI 有版權：題目文字**不要自行填寫**，請貼入授權英語版後把下面的佔位字串換掉。
+    // 題目文字與呈現順序由使用者提供；reverse 標記跟著題號走，換順序不影響計分。
     // ★ 下面四個作答選項是 STAI-S 慣用的英語錨點，請同時對照授權版核實。
     stai: {
       title: 'How You Feel Right Now',
@@ -187,12 +187,12 @@ window.MATERIALS = {
       type: 'likert',
       options: [{ v: 1, t: 'Not at all' }, { v: 2, t: 'Somewhat' }, { v: 3, t: 'Moderately so' }, { v: 4, t: 'Very much so' }],
       items: [
-        { no: 1, text: '(STAI-S item 1 — to be inserted from licensed English version)', reverse: true },
-        { no: 3, text: '(STAI-S item 3 — to be inserted from licensed English version)' },
-        { no: 6, text: '(STAI-S item 6 — to be inserted from licensed English version)' },
-        { no: 15, text: '(STAI-S item 15 — to be inserted from licensed English version)', reverse: true },
-        { no: 16, text: '(STAI-S item 16 — to be inserted from licensed English version)', reverse: true },
-        { no: 17, text: '(STAI-S item 17 — to be inserted from licensed English version)' },
+        { no: 3, text: 'I feel tense' },
+        { no: 6, text: 'I feel upset' },
+        { no: 17, text: 'I am worried' },
+        { no: 1, text: 'I feel calm', reverse: true },
+        { no: 15, text: 'I feel relaxed', reverse: true },
+        { no: 16, text: 'I feel content', reverse: true },
       ],
     },
 

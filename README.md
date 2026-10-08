@@ -289,7 +289,7 @@ python3 pilot_limits.py 某個資料夾 --median   # 人數少、標準差不穩
 | 正式文本 2N 篇 | 英文**示範文本**（6 篇＋練習 1 篇，每篇 3 題），都標 `demo: true`，開始畫面會顯示「示範文本」提醒 | 同學（文本負責人） |
 | 文本類型數與名稱 | 暫定 3 類，名稱在 `materials.js` 的 `textTypeLabels`（改名只改這裡） | 同學 |
 | 各篇寬鬆／緊迫秒數、前導平均 | 演示用暫填 150／90、`pilotMean_s: 120` | 前導實驗 → `pilot_limits.py` |
-| STAI 6 題題目文字 | 有版權，目前是 `(STAI-S item N — to be inserted from licensed English version)` 佔位字串；計分邏輯（第 1、15、16 題反向、總分 × 20 ÷ 6）已完成 | 使用者貼入授權英語版 |
+| STAI 6 題題目文字 | 已填入 `materials.js`（順序：tense, upset, worried, calm, relaxed, content）；計分邏輯（第 1、15、16 題反向、總分 × 20 ÷ 6）已完成 | —（正式施測前仍須取得授權） |
 | NASA-TLX | 已用 NASA 公開的英語原版定義（6 分量表、21 刻度、0–100、不做兩兩比較加權） | — |
 | 同學量表 | `materials.js` 的 `peer` 插槽有 1 題示範題；預設不在 `roundQuestionnaires` 內，要啟用就把 `'peer'` 加進去 | 同學 |
 | 後測問卷 | `postQuestionnaires: []`（空清單；為空時結束畫面前自動略過） | 使用者 |
