@@ -136,12 +136,12 @@ type1A: { …, limit: { loose: 150, tight: 90 }, pilotMean_s: 120 }
 | `events.jsonl` | 所有事件；每筆都有 `client_ms`（毫秒時間戳）與 `wall_time`（含時區的 ISO 8601，到毫秒） |
 | `session.json` | 場次設定、回合順序、前後測分數、各回合完整結果 |
 
-### `summary.csv` 欄位（41 欄）
+### `summary.csv` 欄位（42 欄）
 
 ```
 pid, latin_row, manual_order, pilot, round, time, text_type, form, passage_id, passage_title, words,
 limit_s, pilot_mean_s, rtt_group, t_expected_s, rtt,
-answers, correct_flags, correct, n_items, accuracy, rt_s, end_reason,
+answers, correct_flags, correct, n_items, n_scored, accuracy, rt_s, end_reason,
 t50_s, t25_s, t10_s,
 nasa_mental, nasa_physical, nasa_temporal, nasa_performance, nasa_effort, nasa_frustration,
 stai_raw, stai_prorated,
@@ -149,6 +149,15 @@ practice_rt_s, practice_words, sec_per_word,
 est_s, wall_start, wall_end, overflow
 ```
 
+- **閱讀題計分**（正確答案見 `materials.js` 每題的 `ans`，以材料原件「設計總覽」表格為準）：
+  - **唯一解**（type1）：選中唯一的可證成選項才算對。
+  - **多重解**（type2）：兩個可證成選項**選中任一個都算對**。
+  - **無解**（type3）：沒有正解，**不計分**；選項與時間照常記錄。
+  - `answers`：每題選的字母，未作答記 `-`。
+  - `correct_flags`：每題 1／0；無解題記 `NA`。
+  - `correct`：答對題數；`n_items`：題數；`n_scored`：**可計分題數**（無解題不算）。
+  - `accuracy` ＝ `correct` ÷ `n_scored`，**只用可計分的題目計算**；無解回合 `n_scored = 0`，`accuracy` 留空。
+  - 未作答的可計分題算錯（計入分母）。
 - `t50_s`／`t25_s`／`t10_s`：到達各時間點的回合內秒數（欄名跟著 `design.js` 的 `timeMarks` 走）。
 - `wall_start`／`wall_end`：該回合開始／結束的牆上時間（含時區、到毫秒）。
 - **練習列（`round = 0`）**：量表欄位留空；另有 `practice_rt_s`、`practice_words`、`sec_per_word`。
@@ -163,7 +172,7 @@ pid, context, round, source, item, item_label, option, value, correct, is_change
 
 - `context`：`practice`／`round`／`pretest`／`posttest`。
 - `source`：`reading`（閱讀題）或量表名稱（`nasa`／`stai`／`peer`）。
-- `correct`：閱讀題才有（1／0）；量表留空。
+- `correct`：閱讀題才有（1／0）；**無解題留空**（沒有正解）；量表留空。
 - `is_change` ＝ 1 表示這次點選是**改答**，`prev_option` 是改之前選的。
 - `t_ms`：距**該畫面開始**的毫秒數（閱讀題＝回合開始，量表＝該份量表出現）。
 
@@ -272,13 +281,13 @@ python3 pilot_limits.py 某個資料夾 --median   # 人數少、標準差不穩
 
 ### ★ 版面容量（給寫文本的人）
 
-畫面固定 1920 × 1080、**不捲動**，所以材料長度有上限。目前排版（文本 22px／行距 1.7）實測可容納：
+畫面固定 1920 × 1080、**不捲動**，所以材料長度有上限。六篇共用同一套排版（文本 22px／行距 1.6／段距 10px），實測可容納：
 
-| 項目 | 上限 | 目前示範文本 |
+| 項目 | 上限 | 目前正式文本 |
 |---|---|---|
-| 一篇文本 | 約 **250 英文詞**、4 段（標題佔一行時） | 215–250 詞 |
-| 每篇題數 | **3 題**（每題 4 選項，選項單欄排列） | 3 題 |
-| 單一選項長度 | 約 **60 個字元**（超過會折行，仍放得下，但會擠掉空間） | 43–55 字元 |
+| 一篇文本 | 約 **280 英文詞**、5 段（標題佔一行時；最長的 6 號剩約 20px） | 213–281 詞、3–5 段 |
+| 每篇題數 | 2 題時作答區還很寬裕；3 題也放得下 | 2 題 |
+| 單一選項長度 | 2 題時選項折成兩行也放得下 | 最長約 160 字元（折兩行） |
 | 練習文本 | 約正式文本三分之二、2–3 題 | 146 詞、3 題 |
 
 **開始畫面會自動預檢每一篇**：有文本放不下時會在警告區列出是哪幾篇，建議在施測前先換掉或縮短。
@@ -286,8 +295,9 @@ python3 pilot_limits.py 某個資料夾 --median   # 人數少、標準差不穩
 
 | 項目 | 現況 | 由誰補 |
 |---|---|---|
-| 正式文本 2N 篇 | 英文**示範文本**（6 篇＋練習 1 篇，每篇 3 題），都標 `demo: true`，開始畫面會顯示「示範文本」提醒 | 同學（文本負責人） |
-| 文本類型數與名稱 | 暫定 3 類，名稱在 `materials.js` 的 `textTypeLabels`（改名只改這裡） | 同學 |
+| 正式文本 6 篇 | **已放入**（2026-10-08，原件 @Perry「考試閱讀實驗材料」，只放英文文章與題目，每篇 2 題）。對應：1 號→type1A、4 號→type1B、2 號→type2A、5 號→type2B、3 號→type3A、6 號→type3B | — |
+| 文本類型數與名稱 | 3 類＝答案結構：唯一解／多重解／無解；A 篇＝說明文、B 篇＝論辯文 | — |
+| 練習文本 | 仍是示範文本（Why Bread Rises，3 題，`demo: true`） | 視需要 |
 | 各篇寬鬆／緊迫秒數、前導平均 | 演示用暫填 150／90、`pilotMean_s: 120` | 前導實驗 → `pilot_limits.py` |
 | STAI 6 題題目文字 | 已填入 `materials.js`（順序：tense, upset, worried, calm, relaxed, content）；計分邏輯（第 1、15、16 題反向、總分 × 20 ÷ 6）已完成 | —（正式施測前仍須取得授權） |
 | NASA-TLX | 已用 NASA 公開的英語原版定義（6 分量表、21 刻度、0–100、不做兩兩比較加權） | — |

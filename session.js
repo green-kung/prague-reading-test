@@ -125,7 +125,7 @@ window.Session = (() => {
     trialEnd(r, info) {
       const rec = S.rounds[r], e = log({ type: 'trial_end', round: r, ...info });
       if (rec) {
-        ['endReason', 'rt_s', 'elapsed_s', 'answers', 'correctFlags', 'correct', 'nItems', 'accuracy',
+        ['endReason', 'rt_s', 'elapsed_s', 'answers', 'correctFlags', 'correct', 'nItems', 'nScored', 'accuracy',
           'passageTitle', 'words'].forEach(k => { rec[k] = info[k]; });
         rec.wall_end = e.wall_time;
         rec.status = 'done';

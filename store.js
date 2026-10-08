@@ -103,7 +103,7 @@ window.Store = (() => {
   function summaryColumns(d) {
     return ['pid', 'latin_row', 'manual_order', 'pilot', 'round', 'time', 'text_type', 'form', 'passage_id',
       'passage_title', 'words', 'limit_s', 'pilot_mean_s', 'rtt_group', 't_expected_s', 'rtt',
-      'answers', 'correct_flags', 'correct', 'n_items', 'accuracy', 'rt_s', 'end_reason']
+      'answers', 'correct_flags', 'correct', 'n_items', 'n_scored', 'accuracy', 'rt_s', 'end_reason']
       .concat(MARKS(d).map(p => `t${p}_s`))
       .concat(['nasa_mental', 'nasa_physical', 'nasa_temporal', 'nasa_performance', 'nasa_effort', 'nasa_frustration',
         'stai_raw', 'stai_prorated', 'practice_rt_s', 'practice_words', 'sec_per_word',
@@ -127,8 +127,8 @@ window.Store = (() => {
         r.time || '', r.textType || '', r.form || '', r.passageId || '', r.passageTitle || '', r.words,
         limit == null ? '' : limit, pmean == null ? '' : pmean, rttGroup, tExp == null ? '' : tExp, rtt,
         (r.answers || []).map(a => a || '-').join(' '),
-        (r.correctFlags || []).map(f => f ? 1 : 0).join(' '),
-        r.correct, r.nItems, r.accuracy, r.rt_s, r.endReason]
+        (r.correctFlags || []).map(f => f === null || f === undefined ? 'NA' : (f ? 1 : 0)).join(' '),   // NA＝無解題
+        r.correct, r.nItems, r.nScored, r.accuracy, r.rt_s, r.endReason]
         .concat(MARKS(d).map(p => r[`t${p}_s`]))
         .concat([nasa.mental, nasa.physical, nasa.temporal, nasa.performance, nasa.effort, nasa.frustration,
           stai.raw, stai.prorated,

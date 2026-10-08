@@ -50,11 +50,11 @@
 
   /* ── 測驗畫面（座標皆為整張 1920×1080 版面座標；.scr 已下移 64px，故 top 減 64） ── */
   /* 左欄：文本區 x 48–1048, y 96–1040
-     字級與行距：英文 22px／行距 1.7（行高約 37px）；一篇約 250 詞、4 段放得下，
-     超出時開始畫面的版面檢查會先警告 */
+     字級與行距：英文 22px／行距 1.6（行高約 35px）、段距 10px；六篇共用同一套版面，
+     最長的一篇（約 280 詞、5 段）放得下；超出時開始畫面的版面檢查會先警告 */
   #text-area { position: absolute; left: 48px; top: 32px; width: 1000px; height: 944px; padding: 40px 48px; overflow: hidden; }
   #text-area h1 { font-size: 30px; font-weight: 600; line-height: 1.4; margin-bottom: 22px; }
-  #text-area p { font-size: 22px; line-height: 1.7; margin-bottom: 12px; text-align: left; }
+  #text-area p { font-size: 22px; line-height: 1.6; margin-bottom: 10px; text-align: left; }
 
   /* 右欄上方：計時器（時間標記）x 1088–1872, y 96–236 ── 數字倒數，全部回合樣式相同、持續顯示 */
   #timer-card { position: absolute; left: 1088px; top: 32px; width: 784px; height: 140px;
@@ -186,9 +186,11 @@
     padding: 14px; border: none; border-radius: 10px; background: var(--accent); color: #fff; cursor: pointer; }
   #start-btn:disabled { opacity: .4; cursor: default; }
   /* 版面檢查用的隱藏量測區（與文本區同寬同字級） */
-  #probe { position: absolute; left: -99999px; top: 0; width: 1000px; padding: 40px 48px; visibility: hidden; }
+  /* 字型要與受試者畫面相同（#setup 用中文字型，不設定會被繼承而量錯） */
+  #probe { position: absolute; left: -99999px; top: 0; width: 1000px; padding: 40px 48px; visibility: hidden;
+    font-family: "Inter", "Helvetica Neue", Helvetica, Arial, system-ui, sans-serif; }
   #probe h1 { font-size: 30px; font-weight: 600; line-height: 1.4; margin-bottom: 22px; }
-  #probe p { font-size: 22px; line-height: 1.7; margin-bottom: 12px; text-align: left; }
+  #probe p { font-size: 22px; line-height: 1.6; margin-bottom: 10px; text-align: left; }
 </style>
 </head>
 <body>
@@ -364,7 +366,7 @@ const CFG = (() => {
     });
     if (p.pilotMean_s == null) out.warnings.push(`${p.key}（${p.title}）的前導平均秒數 pilotMean_s 尚未填入，群體層級時間容忍度會留空`);
   });
-  if (formal.some(p => p.demo) || (out.practice && out.practice.demo)) out.warnings.push('目前使用示範文本：正式文本尚未放入 materials.js');
+  if (formal.some(p => p.demo)) out.warnings.push('目前使用示範文本：正式文本尚未放入 materials.js');
   out.ok = out.errors.length === 0;
   return out;
 })();
@@ -435,6 +437,10 @@ $('f-pilot').onchange = renderSetup;
 // ══════════════════════════════════════════════════════════════════════════════
 const fmt = s => `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
 const passageFor = id => M.passages[id] || M.passages[D.practicePassage];
+// 可證成選項：ans 可為陣列（唯一解 [1]、多重解 [0, 1]、無解 []）或舊寫法的單一數字
+const keyOf = q => Array.isArray(q.ans) ? q.ans : (q.ans == null ? [] : [q.ans]);
+// 選中任一可證成選項即算對；無解題沒有正解，回傳 null（不計分）
+const isCorrect = (q, a) => keyOf(q).length ? (a !== null && keyOf(q).includes(a)) : null;
 const limitFor = (p, time) => (p && p.limit && p.limit[time] != null) ? +p.limit[time] : null;
 
 let current = null;        // 進行中的回合（可中止計時器）
@@ -615,7 +621,7 @@ function runTrial(r) {
       const prev = picked[qi + 1];
       picked[qi + 1] = opt;
       const answered = updateProgress(p);
-      Session.readingClick(r, { q: qi + 1, opt, correct: +e.target.value === p.questions[qi].ans,
+      Session.readingClick(r, { q: qi + 1, opt, correct: isCorrect(p.questions[qi], +e.target.value),
         prevOpt: prev && prev !== opt ? prev : null, t_ms: rel(), answered });
     };
 
@@ -625,14 +631,17 @@ function runTrial(r) {
         const el = document.querySelector(`input[name=q${i}]:checked`);
         return el ? +el.value : null;                                   // 未作答記為 null，計 0 分
       });
-      const correct = answers.filter((a, i) => a === p.questions[i].ans).length;
+      // 無解題的 flag 為 null，不進分子也不進分母；accuracy 只用可計分的題目計算
+      const correctFlags = answers.map((a, i) => isCorrect(p.questions[i], a));
+      const nScored = correctFlags.filter(f => f !== null).length;
+      const correct = correctFlags.filter(f => f === true).length;
       // 時間到者作答時間即為時限；另存實際經過時間供核對
       Session.trialEnd(r, { endReason: reason, t_ms: rel(),
         rt_s: reason === 'timeout' ? cfg.limit_s : +(rel() / 1000).toFixed(3),
         elapsed_s: +(rel() / 1000).toFixed(3),
         answers: answers.map(a => a === null ? null : 'ABCD'[a]),
-        correctFlags: answers.map((a, i) => a === p.questions[i].ans),
-        correct, nItems: answers.length, accuracy: +(correct / answers.length).toFixed(3),
+        correctFlags, correct, nItems: answers.length, nScored,
+        accuracy: nScored ? +(correct / nScored).toFixed(3) : null,
         passageTitle: p.title, words: M.words(p) });
       current = null;
       nextStage();
