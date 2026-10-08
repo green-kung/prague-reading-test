@@ -419,7 +419,7 @@ function renderSetup() {
   $('order-box').innerHTML = h;
   const rest = (D.restAfterRounds || []).filter(x => x < r.plan.length);
   $('order-note').textContent = `編號 ${pid} → 順序表第 ${r.latinRow} 列（順序由設定檔決定，不提供手動調整；要換順序請改 design.js 的 latinSquare）`
-    + (rest.length ? `｜休息點：第 ${rest.join('、')} 回合之後（研究者按 Shift + Enter 繼續）` : '｜沒有設休息點');
+    + (rest.length ? `｜休息點：第 ${rest.join('、')} 回合之後（研究者按 Shift + Enter 繼續）` : '');
   const warn = CFG.warnings.filter(w => !pilot || !w.includes('時限尚未填入'));
   const over = precheckPassages();
   if (over.length) warn.unshift(`以下文本超出文本區、會被裁掉：${over.join('、')}（請縮短，或調整 index.html 的字級行距）`);
