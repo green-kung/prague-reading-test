@@ -19,7 +19,7 @@ window.MATERIALS = {
   // 正式文本：key＝`{textType}{form}`，例如 type1A；textType 與 form 兩欄是查表依據。
   //
   // limit: { loose: 秒, tight: 秒 }  每篇各有兩個秒數（寬鬆、緊迫）
-  //   ⚠️ 目前填的 150／90 與 pilotMean_s 120 是**為了 10/8 演示隨意設定的數字**
+  //   ⚠️ 目前寬鬆、緊迫都暫填 300 秒（5 分鐘，無時間壓力差），pilotMean_s 120 是**演示用隨意設定的數字**
   //      （Claude 設定，非文獻或 meeting 依據）。前導實驗後請用 pilot_limits.py
   //      算出的值覆蓋；未填時設為 null，開始畫面會顯示警告。
   // pilotMean_s: 前導實驗「不限時」的平均作答秒數 → 群體層級時間容忍度的分母。

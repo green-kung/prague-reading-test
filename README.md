@@ -106,7 +106,7 @@ type1A: { …, limit: { loose: 150, tight: 90 }, pilotMean_s: 120 }
 - `pilotMean_s`：前導實驗「不限時」的平均作答秒數 → 群體層級時間容忍度的分母。
 - 填 `null` 時開始畫面會顯示警告；該篇若真的沒有秒數就會以不限時進行，並在事件紀錄留一筆警告。
 
-⚠️ **目前填的 150／90 與 `pilotMean_s: 120` 是為了演示隨意設定的數字（非文獻或 meeting 依據），前導實驗後必須換掉。**
+⚠️ **目前寬鬆、緊迫都暫填 300 秒（5 分鐘，兩條件沒有時間差）；`pilotMean_s: 120` 是演示用隨意設定的數字（非文獻或 meeting 依據）。正式施測前必須換掉。**
 
 ---
 
@@ -298,7 +298,7 @@ python3 pilot_limits.py 某個資料夾 --median   # 人數少、標準差不穩
 | 正式文本 6 篇 | **已放入**（2026-10-08，原件 @Perry「考試閱讀實驗材料」，只放英文文章與題目，每篇 2 題）。對應：1 號→type1A、4 號→type1B、2 號→type2A、5 號→type2B、3 號→type3A、6 號→type3B | — |
 | 文本類型數與名稱 | 3 類＝答案結構：唯一解／多重解／無解；A 篇＝說明文、B 篇＝論辯文 | — |
 | 練習文本 | 仍是示範文本（Why Bread Rises，2 題，`demo: true`） | 視需要 |
-| 各篇寬鬆／緊迫秒數、前導平均 | 演示用暫填 150／90、`pilotMean_s: 120` | 前導實驗 → `pilot_limits.py` |
+| 各篇寬鬆／緊迫秒數、前導平均 | 暫填寬鬆＝緊迫＝300 秒（5 分鐘）、`pilotMean_s: 120` | 前導實驗 → `pilot_limits.py` |
 | STAI 6 題題目文字 | 已填入 `materials.js`（順序：tense, upset, worried, calm, relaxed, content）；計分邏輯（第 1、15、16 題反向、總分 × 20 ÷ 6）已完成 | —（正式施測前仍須取得授權） |
 | NASA-TLX | 已用 NASA 公開的英語原版定義（6 分量表、21 刻度、0–100、不做兩兩比較加權） | — |
 | 同學量表 | `materials.js` 的 `peer` 插槽有 1 題示範題；預設不在 `roundQuestionnaires` 內，要啟用就把 `'peer'` 加進去 | 同學 |
