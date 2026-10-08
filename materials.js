@@ -31,7 +31,7 @@ window.MATERIALS = {
   passages: {
 
     // ── 練習文本（不限時、無計時器、不填量表；兼作閱讀速度與眼動基準）──────────
-    // 長度約正式文本三分之二、3 題
+    // 長度約正式文本三分之二、2 題（與正式文本題數相同）
     practice: {
       id: 'practice', title: 'Why Bread Rises', demo: true,
       paras: [
@@ -42,14 +42,13 @@ window.MATERIALS = {
       questions: [
         { stem: 'According to the passage, what makes bread dough rise?', opts: ['Salt dissolving in the water', 'Water turning into steam', 'Carbon dioxide released by yeast', 'Gluten absorbing sugar'], ans: 2, kind: 'surface' },
         { stem: 'Why does dough that has not been kneaded enough stay flat?', opts: ['The gas escapes through a weak gluten network', 'The yeast dies before it can feed', 'Too much salt has been added to the flour', 'The flour contains no sugar for the yeast'], ans: 0, kind: 'inference' },
-        { stem: 'Why do some bakers let dough rise overnight in a cold place?', opts: ['To kill the yeast before baking begins', 'To make the gluten network weaker', 'To stop carbon dioxide from forming', 'To develop more flavour while the yeast works slowly'], ans: 3, kind: 'inference' },
       ],
     },
 
     // ── 唯一解 ─────────────────────────────────────────────────────────────
     type1A: {   // 原件第 1 號（說明文）
       id: 'type1A', textType: 'type1', form: 'A', title: "Circadian Rhythm",
-      limit: { loose: 150, tight: 90 }, pilotMean_s: 120,
+      limit: { loose: 300, tight: 300 }, pilotMean_s: 120,   // 2026-10-08 暫時全部統一 300 秒（5 分鐘）
       paras: [
         "A circadian rhythm is a physiological cycle of roughly twenty-four hours inside a living organism. It includes sleep and wakefulness, the rise and fall of body temperature, and the release of hormones. This rhythm is not simply produced by the outside cycle of day and night. Even when people are placed in an environment with no time cues, the rhythm keeps running, although its cycle gradually drifts away from the actual clock.",
         "In humans, the rhythm is coordinated by the suprachiasmatic nucleus in the hypothalamus. When the retina receives light, it sends signals to the suprachiasmatic nucleus, which synchronizes the body clock with the outside day and night. Light is therefore regarded as the most important time cue. In the evening, as light fades, the pineal gland begins to release melatonin, body temperature falls, and the body gradually enters a state suited to sleep. After exposure to light in the early morning, melatonin release is suppressed and the person wakes up.",
@@ -67,7 +66,7 @@ window.MATERIALS = {
 
     type1B: {   // 原件第 4 號（論辯文）
       id: 'type1B', textType: 'type1', form: 'B', title: "Remote Work",
-      limit: { loose: 150, tight: 90 }, pilotMean_s: 120,
+      limit: { loose: 300, tight: 300 }, pilotMean_s: 120,   // 2026-10-08 暫時全部統一 300 秒（5 分鐘）
       paras: [
         "Whether remote work should become the norm for companies has been widely debated in recent years.",
         "Supporters argue that remote work should become the norm. First, employees save commuting time and can arrange work and life more flexibly. Second, an experiment with customer service staff at a travel company found that those who worked from home performed better and were less likely to quit. On this basis, supporters claim that remote work benefits both employees and companies.",
@@ -88,7 +87,7 @@ window.MATERIALS = {
     // ── 多重解 ─────────────────────────────────────────────────────────────
     type2A: {   // 原件第 2 號（說明文）
       id: 'type2A', textType: 'type2', form: 'A', title: "Urban Heat Island",
-      limit: { loose: 150, tight: 90 }, pilotMean_s: 120,
+      limit: { loose: 300, tight: 300 }, pilotMean_s: 120,   // 2026-10-08 暫時全部統一 300 秒（5 分鐘）
       paras: [
         "The urban heat island effect is the phenomenon in which temperatures in a city are clearly higher than in the surrounding countryside. The difference is usually most noticeable at night, because the heat a city stores during the day is released only slowly after dark.",
         "The effect is related to the surface materials and spatial structure of cities. Asphalt and concrete absorb and store large amounts of solar radiation during the day and release that heat into the air after nightfall. In contrast, vegetation in the countryside carries heat away through evapotranspiration, and the evaporation of water in the soil also has a cooling effect. Cities have little vegetation, so this natural cooling is weakened. In addition, densely packed tall buildings block the flow of air, which makes it harder for heat to escape, while waste heat from air conditioners, vehicles and factories raises temperatures further.",
@@ -106,7 +105,7 @@ window.MATERIALS = {
 
     type2B: {   // 原件第 5 號（論辯文）
       id: 'type2B', textType: 'type2', form: 'B', title: "School Phone Bans",
-      limit: { loose: 150, tight: 90 }, pilotMean_s: 120,
+      limit: { loose: 300, tight: 300 }, pilotMean_s: 120,   // 2026-10-08 暫時全部統一 300 秒（5 分鐘）
       paras: [
         "Whether schools should completely ban students from using mobile phones at school is an education issue under discussion in many countries.",
         "Those in favour of a ban argue that phones are the main source of distraction in class. Even when a phone is not picked up, message notifications interrupt students' attention. A study in England found that after schools banned phones, students' exam results improved, and students who had previously had lower results improved the most. Those in favour also point out that without phones at break time, students have more chances to spend time with each other face to face.",
@@ -127,7 +126,7 @@ window.MATERIALS = {
     // ── 無解 ─────────────────────────────────────────────────────────────
     type3A: {   // 原件第 3 號（說明文）
       id: 'type3A', textType: 'type3', form: 'A', title: "Coral Bleaching",
-      limit: { loose: 150, tight: 90 }, pilotMean_s: 120,
+      limit: { loose: 300, tight: 300 }, pilotMean_s: 120,   // 2026-10-08 暫時全部統一 300 秒（5 分鐘）
       paras: [
         "Corals look like rocks or plants, but they are in fact colonies made up of many tiny animals called polyps. Inside the tissue of reef-building corals live single-celled algae called zooxanthellae. The two have a mutually beneficial relationship: the zooxanthellae carry out photosynthesis and pass the nutrients they produce to the coral, while the coral gives the zooxanthellae a place to live and the carbon dioxide they need for photosynthesis. Most of a coral's colour also comes from these algae.",
         "When seawater stays too warm for a long time, photosynthesis in the zooxanthellae goes wrong and produces substances that harm the coral's tissue, so the coral expels the zooxanthellae from its body. Without the algae, the coral's tissue becomes transparent and the white calcium carbonate skeleton beneath it shows through. This is coral bleaching. Besides high temperature, strong sunlight and water pollution may also trigger bleaching.",
@@ -145,7 +144,7 @@ window.MATERIALS = {
 
     type3B: {   // 原件第 6 號（論辯文）
       id: 'type3B', textType: 'type3', form: 'B', title: "Congestion Charge",
-      limit: { loose: 150, tight: 90 }, pilotMean_s: 120,
+      limit: { loose: 300, tight: 300 }, pilotMean_s: 120,   // 2026-10-08 暫時全部統一 300 秒（5 分鐘）
       paras: [
         "To improve traffic in city centres, some cities charge a congestion fee on vehicles that enter the centre during peak hours. Opinions differ on whether this policy is worth adopting.",
         "Supporters argue that road space is limited and that a charge encourages drivers to switch to public transport or to travel at a different time. After London and Stockholm introduced a charge, the number of vehicles entering the city centre fell clearly in both cities. Supporters also point out that the revenue can be used to improve buses and metro services, so that people who do not drive benefit as well.",
