@@ -408,9 +408,10 @@ function renderSetup() {
   const r = expandOrder(pid);
   draft = r;
   if (!r) { $('order-box').innerHTML = ''; $('order-note').textContent = ''; $('start-btn').disabled = true; return; }
-  let h = '<table><tr><th>回合</th><th>時間</th><th>文本類型</th><th>篇名</th><th>時限</th></tr>';
+  // 目前寬鬆、緊迫的時限相同，所以不顯示「時間」欄（資料仍照常記錄 time）
+  let h = '<table><tr><th>回合</th><th>文本類型</th><th>篇名</th><th>時限</th></tr>';
   r.plan.forEach((p, i) => {
-    h += `<tr><td class="mono">${i + 1}</td><td>${TIME_LABEL[p.time]}</td><td>${typeLabel(p.textType)}（${p.form}）</td>
+    h += `<tr><td class="mono">${i + 1}</td><td>${typeLabel(p.textType)}（${p.form}）</td>
       <td title="${p.passageTitle}">${p.passageTitle}</td>
       <td class="mono">${pilot ? '不限時' : (p.limit_s == null ? '⚠ 未填' : p.limit_s + ' 秒')}</td></tr>`;
   });
