@@ -439,8 +439,15 @@ const fmt = s => `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60
 const passageFor = id => M.passages[id] || M.passages[D.practicePassage];
 // 可證成選項：ans 可為陣列（唯一解 [1]、多重解 [0, 1]、無解 []）或舊寫法的單一數字
 const keyOf = q => Array.isArray(q.ans) ? q.ans : (q.ans == null ? [] : [q.ans]);
-// 選中任一可證成選項即算對；無解題沒有正解，回傳 null（不計分）
-const isCorrect = (q, a) => keyOf(q).length ? (a !== null && keyOf(q).includes(a)) : null;
+// 每題可勾 1–4 個選項（方框，不提示可複選）；sel＝已勾選項的索引陣列
+// 勾選集合「完全等於」可證成選項才算對（多勾、少勾都算錯；沒勾算錯）；無解題回傳 null（不計分）
+const isCorrect = (q, sel) => {
+  const k = keyOf(q);
+  if (!k.length) return null;
+  return sel.length === k.length && k.every(x => sel.includes(x));
+};
+const letters = sel => sel.map(j => 'ABCD'[j]).join('');
+const selectedOf = i => [...document.querySelectorAll(`input[name=q${i}]:checked`)].map(el => +el.value).sort();
 const limitFor = (p, time) => (p && p.limit && p.limit[time] != null) ? +p.limit[time] : null;
 
 let current = null;        // 進行中的回合（可中止計時器）
@@ -549,7 +556,7 @@ function render(cfg) {
   $('text-area').innerHTML = `<h1>${p.title}</h1>` + p.paras.map(t => `<p>${t}</p>`).join('');
   $('answer-area').innerHTML = p.questions.map((q, i) => `
     <div class="q" id="q${i}"><div class="q-stem"><span class="q-no">${i + 1}</span><span>${q.stem}</span></div><div class="q-opts">
-      ${q.opts.map((o, j) => `<label><input type="radio" name="q${i}" value="${j}">${'ABCD'[j]}. ${o}</label>`).join('')}
+      ${q.opts.map((o, j) => `<label><input type="checkbox" name="q${i}" value="${j}">${'ABCD'[j]}. ${o}</label>`).join('')}
     </div></div>`).join('') +
     `<div id="submit-row"><span id="progress"></span><button id="submit">Submit</button></div>`;
   $('timer-card').style.visibility = cfg.timed ? 'visible' : 'hidden';
@@ -604,7 +611,6 @@ function runTrial(r) {
     const p = render(cfg);
     const t0 = performance.now();
     const rel = () => Math.round(performance.now() - t0);
-    const picked = {};
     let done = false, raf, guard;
     const marks = (D.timeMarks || []).map(f => ({ f, name: `time_${Math.round(f * 100)}`, hit: false }));
 
@@ -617,20 +623,18 @@ function runTrial(r) {
     // ★ 用 onchange（而非 addEventListener）：#answer-area 每回合只換內容、元素本身不換，
     //   若每回合都 addEventListener，舊回合的處理器會留著，造成同一次作答被重複記成多個回合的事件。
     $('answer-area').onchange = e => {
-      const qi = +e.target.name.slice(1), opt = 'ABCD'[e.target.value];
-      const prev = picked[qi + 1];
-      picked[qi + 1] = opt;
+      // 每勾／取消一個方框記一列：toggle＝+C（勾）／-C（取消）；opt＝這次點完後的勾選集合
+      const qi = +e.target.name.slice(1), letter = 'ABCD'[e.target.value];
+      const sel = selectedOf(qi), after = letters(sel);
+      const before = letters(e.target.checked ? sel.filter(j => j !== +e.target.value) : [...sel, +e.target.value].sort());
       const answered = updateProgress(p);
-      Session.readingClick(r, { q: qi + 1, opt, correct: isCorrect(p.questions[qi], +e.target.value),
-        prevOpt: prev && prev !== opt ? prev : null, t_ms: rel(), answered });
+      Session.readingClick(r, { q: qi + 1, opt: after, toggle: (e.target.checked ? '+' : '-') + letter,
+        correct: isCorrect(p.questions[qi], sel), prevOpt: before || null, t_ms: rel(), answered });
     };
 
     const finish = reason => {
       if (done) return; done = true; cancelAnimationFrame(raf); clearInterval(guard);
-      const answers = p.questions.map((q, i) => {
-        const el = document.querySelector(`input[name=q${i}]:checked`);
-        return el ? +el.value : null;                                   // 未作答記為 null，計 0 分
-      });
+      const answers = p.questions.map((q, i) => selectedOf(i));          // 未作答＝空陣列，可計分題算錯
       // 無解題的 flag 為 null，不進分子也不進分母；accuracy 只用可計分的題目計算
       const correctFlags = answers.map((a, i) => isCorrect(p.questions[i], a));
       const nScored = correctFlags.filter(f => f !== null).length;
@@ -639,7 +643,7 @@ function runTrial(r) {
       Session.trialEnd(r, { endReason: reason, t_ms: rel(),
         rt_s: reason === 'timeout' ? cfg.limit_s : +(rel() / 1000).toFixed(3),
         elapsed_s: +(rel() / 1000).toFixed(3),
-        answers: answers.map(a => a === null ? null : 'ABCD'[a]),
+        answers: answers.map(a => a.length ? letters(a) : null),
         correctFlags, correct, nItems: answers.length, nScored,
         accuracy: nScored ? +(correct / nScored).toFixed(3) : null,
         passageTitle: p.title, words: M.words(p) });
@@ -781,7 +785,7 @@ function showEnd() {
 
 // ══ 啟動 ══
 if (params.has('freeze')) {
-  // 截圖模式：?freeze=60&passage=type1A&time=tight&picks=B,C（freeze＝剩餘秒數）
+  // 截圖模式：?freeze=60&passage=type1A&time=tight&picks=B,AC（freeze＝剩餘秒數；每題可給多個字母）
   $('setup').classList.add('off');
   const pid = params.get('passage') || 'type1A', time = params.get('time') || 'tight';
   const cfg = { round: 1, passageId: pid, time, timed: true };
@@ -789,10 +793,10 @@ if (params.has('freeze')) {
   showScreen('scr-trial');
   const p = render(cfg);
   paint(+params.get('freeze') * 1000);
-  (params.get('picks') || '').split(',').filter(Boolean).forEach((v, i) => {
-    const el = document.querySelector(`input[name=q${i}][value="${'ABCD'.indexOf(v)}"]`);
+  (params.get('picks') || '').split(',').forEach((v, i) => [...v].forEach(ch => {
+    const el = document.querySelector(`input[name=q${i}][value="${'ABCD'.indexOf(ch)}"]`);
     if (el) el.checked = true;
-  });
+  }));
   updateProgress(p);
 } else {
   renderSetup();

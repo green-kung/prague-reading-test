@@ -150,10 +150,12 @@ est_s, wall_start, wall_end, overflow
 ```
 
 - **閱讀題計分**（正確答案見 `materials.js` 每題的 `ans`，以材料原件「設計總覽」表格為準）：
-  - **唯一解**（type1）：選中唯一的可證成選項才算對。
-  - **多重解**（type2）：兩個可證成選項**選中任一個都算對**。
-  - **無解**（type3）：沒有正解，**不計分**；選項與時間照常記錄。
-  - `answers`：每題選的字母，未作答記 `-`。
+  - **每題都可勾 1–4 個選項**（選項前是方框；畫面**不提示**可以複選，題幹維持原樣）。
+  - **勾選集合完全等於可證成選項才算對**；多勾、少勾都算錯。
+  - **唯一解**（type1）：只勾那一個正解才算對。
+  - **多重解**（type2）：兩個可證成選項**都要勾、且不能多勾**才算對；只勾其中一個算錯。
+  - **無解**（type3）：沒有正解，**不計分**；勾選與時間照常記錄。
+  - `answers`：每題最後勾選的字母（如 `B`、`AB`），未作答記 `-`。
   - `correct_flags`：每題 1／0；無解題記 `NA`。
   - `correct`：答對題數；`n_items`：題數；`n_scored`：**可計分題數**（無解題不算）。
   - `accuracy` ＝ `correct` ÷ `n_scored`，**只用可計分的題目計算**；無解回合 `n_scored = 0`，`accuracy` 留空。
@@ -172,8 +174,12 @@ pid, context, round, source, item, item_label, option, value, correct, is_change
 
 - `context`：`practice`／`round`／`pretest`／`posttest`。
 - `source`：`reading`（閱讀題）或量表名稱（`nasa`／`stai`／`peer`）。
-- `correct`：閱讀題才有（1／0）；**無解題留空**（沒有正解）；量表留空。
-- `is_change` ＝ 1 表示這次點選是**改答**，`prev_option` 是改之前選的。
+- **閱讀題每勾或取消一個方框記一列**：
+  - `option`：點完之後的勾選集合（如 `AB`；全部取消時留空）。
+  - `value`：這次的動作，`+C`＝勾 C、`-C`＝取消 C。
+  - `prev_option`：點之前的勾選集合；`is_change` ＝ 1 表示點之前已經有勾選（改答或追加）。
+  - `correct`：點完之後的集合是否完全等於可證成選項（1／0）；**無解題留空**。
+- 量表：`option`／`value` 是選項文字與計分值，`correct` 留空；`is_change` ＝ 1 表示改答，`prev_option` 是改之前選的。
 - `t_ms`：距**該畫面開始**的毫秒數（閱讀題＝回合開始，量表＝該份量表出現）。
 
 ### `layout.csv` 欄位

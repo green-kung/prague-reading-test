@@ -104,11 +104,12 @@ window.Session = (() => {
       }
       return e;
     },
-    // 閱讀題的每一次點選都記一列（含是否為改答）
-    readingClick(r, { q, opt, correct, prevOpt, t_ms, answered }) {
-      const e = log({ type: 'answer', round: r, q, opt, correct, prevOpt: prevOpt || null, t_ms, answered });
+    // 閱讀題每勾／取消一個方框都記一列：opt＝點完後的勾選集合（如 AC），toggle＝+C／-C，
+    // prevOpt＝點之前的勾選集合；correct＝點完後的集合是否完全等於可證成選項
+    readingClick(r, { q, opt, toggle, correct, prevOpt, t_ms, answered }) {
+      const e = log({ type: 'answer', round: r, q, opt, toggle, correct, prevOpt: prevOpt || null, t_ms, answered });
       S.answers.push({ context: r === 0 ? 'practice' : 'round', round: r, source: 'reading',
-        item: q, itemLabel: '', option: opt, value: '', correct,
+        item: q, itemLabel: '', option: opt, value: toggle, correct,
         isChange: !!prevOpt, prevOption: prevOpt || '', t_ms, wall_time: e.wall_time });
     },
     timeMark(r, name, info) {
