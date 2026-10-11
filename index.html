@@ -74,10 +74,12 @@
   .q.answered .q-no { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); }
   /* 英文選項較長，單欄排列（不用兩欄，避免折行把選項擠成兩行） */
   .q-opts { display: grid; grid-template-columns: 1fr; gap: 4px; padding-left: 40px; }
-  .q-opts label { font-size: 17px; line-height: 1.35; display: flex; gap: 10px; align-items: flex-start; cursor: pointer;
-    padding: 5px 12px; border: 1px solid transparent; border-radius: 8px; background: var(--soft); }
-  .q-opts label:has(input:checked) { background: var(--accent-soft); border-color: var(--accent); }
-  .q-opts input { width: 18px; height: 18px; accent-color: var(--accent); flex: none; margin-top: 3px; }
+  /* 選項是整列切換按鈕，不出現方框／✓／圓點，避免暗示可複選；點一下變深底白字，再點變回 */
+  .q-opts .opt { font: inherit; font-size: 17px; line-height: 1.35; text-align: left; color: var(--ink); cursor: pointer;
+    padding: 5px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--soft); }
+  .q-opts .opt[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; }
+  .q-opts .opt:focus { outline: none; }
+  .q-opts .opt:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
   #submit-row { margin-top: auto; display: flex; align-items: center; justify-content: flex-end; gap: 22px; }
   #progress { font-size: 18px; color: var(--muted); letter-spacing: 1px; }
   #submit { font-size: 21px; font-weight: 600; letter-spacing: 2px;
@@ -440,7 +442,7 @@ const fmt = s => `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60
 const passageFor = id => M.passages[id] || M.passages[D.practicePassage];
 // 可證成選項：ans 可為陣列（唯一解 [1]、多重解 [0, 1]、無解 []）或舊寫法的單一數字
 const keyOf = q => Array.isArray(q.ans) ? q.ans : (q.ans == null ? [] : [q.ans]);
-// 每題可勾 1–4 個選項（方框，不提示可複選）；sel＝已勾選項的索引陣列
+// 每題可選 1–4 個選項（整列切換按鈕，不提示可複選）；sel＝已選項的索引陣列
 // 勾選集合「完全等於」可證成選項才算對（多勾、少勾都算錯；沒勾算錯）；無解題回傳 null（不計分）
 const isCorrect = (q, sel) => {
   const k = keyOf(q);
@@ -448,7 +450,7 @@ const isCorrect = (q, sel) => {
   return sel.length === k.length && k.every(x => sel.includes(x));
 };
 const letters = sel => sel.map(j => 'ABCD'[j]).join('');
-const selectedOf = i => [...document.querySelectorAll(`input[name=q${i}]:checked`)].map(el => +el.value).sort();
+const selectedOf = i => [...document.querySelectorAll(`#q${i} .opt[aria-pressed="true"]`)].map(el => +el.dataset.v).sort();
 const limitFor = (p, time) => (p && p.limit && p.limit[time] != null) ? +p.limit[time] : null;
 
 let current = null;        // 進行中的回合（可中止計時器）
@@ -557,7 +559,7 @@ function render(cfg) {
   $('text-area').innerHTML = `<h1>${p.title}</h1>` + p.paras.map(t => `<p>${t}</p>`).join('');
   $('answer-area').innerHTML = p.questions.map((q, i) => `
     <div class="q" id="q${i}"><div class="q-stem"><span class="q-no">${i + 1}</span><span>${q.stem}</span></div><div class="q-opts">
-      ${q.opts.map((o, j) => `<label><input type="checkbox" name="q${i}" value="${j}">${'ABCD'[j]}. ${o}</label>`).join('')}
+      ${q.opts.map((o, j) => `<button type="button" class="opt" data-q="${i}" data-v="${j}" aria-pressed="false">${'ABCD'[j]}. ${o}</button>`).join('')}
     </div></div>`).join('') +
     `<div id="submit-row"><span id="progress"></span><button id="submit">Submit</button></div>`;
   $('timer-card').style.visibility = cfg.timed ? 'visible' : 'hidden';
@@ -567,9 +569,9 @@ function render(cfg) {
   return p;
 }
 function updateProgress(p) {
-  const n = p.questions.filter((_, i) => document.querySelector(`input[name=q${i}]:checked`)).length;
+  const n = p.questions.filter((_, i) => selectedOf(i).length).length;
   $('progress').textContent = `${n} of ${p.questions.length} answered`;
-  p.questions.forEach((_, i) => $(`q${i}`).classList.toggle('answered', !!document.querySelector(`input[name=q${i}]:checked`)));
+  p.questions.forEach((_, i) => $(`q${i}`).classList.toggle('answered', selectedOf(i).length > 0));
   return n;
 }
 const paint = ms => { $('timer-num').textContent = fmt(Math.max(0, Math.ceil(ms / 1000))); };
@@ -621,15 +623,19 @@ function runTrial(r) {
         limit_s: cfg.limit_s, timed: cfg.timed, words: M.words(p), nItems: p.questions.length });
     }));
 
-    // ★ 用 onchange（而非 addEventListener）：#answer-area 每回合只換內容、元素本身不換，
+    // ★ 用 onclick（而非 addEventListener）：#answer-area 每回合只換內容、元素本身不換，
     //   若每回合都 addEventListener，舊回合的處理器會留著，造成同一次作答被重複記成多個回合的事件。
-    $('answer-area').onchange = e => {
-      // 每勾／取消一個方框記一列：toggle＝+C（勾）／-C（取消）；opt＝這次點完後的勾選集合
-      const qi = +e.target.name.slice(1), letter = 'ABCD'[e.target.value];
+    $('answer-area').onclick = e => {
+      // 每按一次選項按鈕記一列：toggle＝+C（選）／-C（取消）；opt＝這次點完後的選取集合
+      const btn = e.target.closest('.opt');
+      if (!btn || done) return;
+      const on = btn.getAttribute('aria-pressed') !== 'true';
+      btn.setAttribute('aria-pressed', on);
+      const qi = +btn.dataset.q, v = +btn.dataset.v, letter = 'ABCD'[v];
       const sel = selectedOf(qi), after = letters(sel);
-      const before = letters(e.target.checked ? sel.filter(j => j !== +e.target.value) : [...sel, +e.target.value].sort());
+      const before = letters(on ? sel.filter(j => j !== v) : [...sel, v].sort());
       const answered = updateProgress(p);
-      Session.readingClick(r, { q: qi + 1, opt: after, toggle: (e.target.checked ? '+' : '-') + letter,
+      Session.readingClick(r, { q: qi + 1, opt: after, toggle: (on ? '+' : '-') + letter,
         correct: isCorrect(p.questions[qi], sel), prevOpt: before || null, t_ms: rel(), answered });
     };
 
@@ -795,8 +801,8 @@ if (params.has('freeze')) {
   const p = render(cfg);
   paint(+params.get('freeze') * 1000);
   (params.get('picks') || '').split(',').forEach((v, i) => [...v].forEach(ch => {
-    const el = document.querySelector(`input[name=q${i}][value="${'ABCD'.indexOf(ch)}"]`);
-    if (el) el.checked = true;
+    const el = document.querySelector(`#q${i} .opt[data-v="${'ABCD'.indexOf(ch)}"]`);
+    if (el) el.setAttribute('aria-pressed', 'true');
   }));
   updateProgress(p);
 } else {
