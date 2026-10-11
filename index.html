@@ -77,7 +77,8 @@
   /* 選項是整列切換按鈕，不出現方框／✓／圓點，避免暗示可複選；點一下變深底白字，再點變回 */
   .q-opts .opt { font: inherit; font-size: 17px; line-height: 1.35; text-align: left; color: var(--ink); cursor: pointer;
     padding: 5px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--soft); }
-  .q-opts .opt[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; }
+  /* 選取時只變色、不變粗，避免字寬改變導致折行、按鈕變高 */
+  .q-opts .opt[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: #fff; }
   .q-opts .opt:focus { outline: none; }
   .q-opts .opt:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
   #submit-row { margin-top: auto; display: flex; align-items: center; justify-content: flex-end; gap: 22px; }
