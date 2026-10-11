@@ -44,9 +44,9 @@ Gazepoint GP3 在**同一台電腦**上由 Gazepoint 自己的軟體校正與錄
 ### 受試者（Start 之後，全英語）
 
 ```
-前測問卷（STAI）
+前測問卷（VAS-A 焦慮量表）
   → Next → 練習回合（不限時、無計時器）→ 計時器說明畫面（約 10 秒）
-  → Next → 回合 1（數字倒數）→ NASA-TLX → STAI
+  → Next → 回合 1（數字倒數）→ VAS-A → NASA-TLX
   → Next → 回合 2 → 量表 …
   → … → 回合 6 → 量表 → 後測問卷（清單為空則自動略過）
   → 結束畫面（自動下載資料）
@@ -68,8 +68,8 @@ Gazepoint GP3 在**同一台電腦**上由 Gazepoint 自己的軟體校正與錄
 
 | 檔案 | 放什麼 | 什麼時候改 |
 |---|---|---|
-| `materials.js` | **材料層**：文本、試題、每篇的時限與前導平均秒數、量表題目與計分 | 文本定稿、前導實驗算出時限、貼入 STAI 授權版題目 |
-| `design.js` | **設計層**：拉丁方格順序表、時間點事件比例、量表清單、練習設定、休息點、前導選項 | 重新規劃順序、改休息點、要加同學量表或後測問卷 |
+| `materials.js` | **材料層**：文本、試題、每篇的時限與前導平均秒數、量表題目與計分 | 文本定稿、前導實驗算出時限 |
+| `design.js` | **設計層**：拉丁方格順序表、時間點事件比例、量表清單、螢幕實體寬度、練習設定、休息點、前導選項 | 重新規劃順序、改休息點、要加同學量表或後測問卷、**到現場填螢幕寬度** |
 
 改完存檔，**重新整理網頁即生效**，程式不用動。
 
@@ -131,7 +131,7 @@ type1A: { …, limit: { loose: 150, tight: 90 }, pilotMean_s: 120 }
 | `summary.csv` | 每回合一列（含練習的 `round = 0`）；欄位見下 |
 | `answers.csv` | **每一次點選一列**：閱讀題、回合後量表、前後測問卷都算，含是否為改答 |
 | `layout.csv` | 每回合各區域的**螢幕座標**，供事後在 Gazepoint 資料上劃興趣區域 |
-| `questionnaires.csv` | 每份問卷一列：編號、場合（round／pretest／posttest）、回合、名稱、各題作答、計分值、分數、牆上時間 |
+| `questionnaires.csv` | 每份問卷一列：編號、場合（round／pretest／posttest）、回合、名稱、各題作答、計分值、分數、`pos`／`moved`／`first_move_ms`（只有 VAS-A 有值）、牆上時間 |
 | `events.jsonl` | 所有事件；每筆都有 `client_ms`（毫秒時間戳）與 `wall_time`（含時區的 ISO 8601，到毫秒） |
 | `session.json` | 場次設定、回合順序、前後測分數、各回合完整結果 |
 
@@ -143,13 +143,13 @@ limit_s, pilot_mean_s, rtt_group, t_expected_s, rtt,
 answers, correct_flags, correct, n_items, n_scored, accuracy, rt_s, end_reason,
 t50_s, t25_s, t10_s,
 nasa_mental, nasa_physical, nasa_temporal, nasa_performance, nasa_effort, nasa_frustration,
-stai_raw, stai_prorated,
+vasa, stai_raw, stai_prorated,
 practice_rt_s, practice_words, sec_per_word,
 est_s, wall_start, wall_end, overflow
 ```
 
 - **閱讀題計分**（正確答案見 `materials.js` 每題的 `ans`，以材料原件「設計總覽」表格為準）：
-  - **每題都可選 1–4 個選項**（每個選項是整列切換按鈕：點一下變深底白字、再點變回；畫面上沒有方框、✓、圓點，**不提示**可以複選，題幹維持原樣）。
+  - **每題都可選 1–4 個選項**（每個選項是整列切換按鈕：點一下變淺色底＋主色粗框＋粗體字、再點變回；畫面上沒有方框、✓、圓點，**不提示**可以複選，題幹維持原樣）。
   - **勾選集合完全等於可證成選項才算對**；多勾、少勾都算錯。
   - **唯一解**（type1）：只勾那一個正解才算對。
   - **多重解**（type2）：兩個可證成選項**都要勾、且不能多勾**才算對；只勾其中一個算錯。
@@ -161,6 +161,7 @@ est_s, wall_start, wall_end, overflow
   - 未作答的可計分題算錯（計入分母）。
 - `t50_s`／`t25_s`／`t10_s`：到達各時間點的回合內秒數（欄名跟著 `design.js` 的 `timeMarks` 走）。
 - `wall_start`／`wall_end`：該回合開始／結束的牆上時間（含時區、到毫秒）。
+- `vasa`：該回合後的 VAS-A 分數（0–30）；`stai_raw`／`stai_prorated` 保留欄位，STAI 目前不施測所以留空。
 - **練習列（`round = 0`）**：量表欄位留空；另有 `practice_rt_s`、`practice_words`、`sec_per_word`。
 - `manual_order` 保留在欄位裡但**恆為 0**（順序不再提供手動調整）。
 - **眼動欄位已全部移除**（網站不收眼動；眼動在 Gazepoint 那邊）。
@@ -172,12 +173,13 @@ pid, context, round, source, item, item_label, option, value, correct, is_change
 ```
 
 - `context`：`practice`／`round`／`pretest`／`posttest`。
-- `source`：`reading`（閱讀題）或量表名稱（`nasa`／`stai`／`peer`）。
+- `source`：`reading`（閱讀題）或量表名稱（`vasa`／`nasa`／`peer`；`stai` 目前不施測）。
 - **閱讀題每按一次選項按鈕（選取或取消）記一列**：
   - `option`：點完之後的勾選集合（如 `AB`；全部取消時留空）。
   - `value`：這次的動作，`+C`＝勾 C、`-C`＝取消 C。
   - `prev_option`：點之前的勾選集合；`is_change` ＝ 1 表示點之前已經有勾選（改答或追加）。
   - `correct`：點完之後的集合是否完全等於可證成選項（1／0）；**無解題留空**。
+- VAS-A：**每按下到放開記一列**（點一下或拖曳一次都算一列）；`item_label` ＝ `anxiety`，`option` ＝ 定位比例 `pos`（0–1，小數 4 位），`value` ＝ 0–30 分；`prev_option` 是上一次放開時的 `pos`。
 - 量表：`option`／`value` 是選項文字與計分值，`correct` 留空；`is_change` ＝ 1 表示改答，`prev_option` 是改之前選的。
 - `t_ms`：距**該畫面開始**的毫秒數（閱讀題＝回合開始，量表＝該份量表出現）。
 
@@ -187,7 +189,7 @@ pid, context, round, source, item, item_label, option, value, correct, is_change
 pid, round, region, x, y, w, h, viewport_w, viewport_h, screen_w, screen_h
 ```
 
-`region` 為 `text`（文本區）／`questions`（題目區）／`timer`（計時器；練習與前導無此列）。
+`region` 為 `text`（文本內容的外框：標題頂到最後一段底）／`questions`（題目內容的外框：第 1 題題幹頂到送出列底）／`timer`（上方工具列的計時器，標籤＋數字的外框；練習與前導無此列）。
 `x`／`y` 是**螢幕座標**（左上角為原點），全螢幕時即為眼動儀座標系；`w`／`h` 為該區塊的寬高。
 
 ### `events.jsonl` 主要事件
@@ -286,11 +288,11 @@ python3 pilot_limits.py 某個資料夾 --median   # 人數少、標準差不穩
 
 ### ★ 版面容量（給寫文本的人）
 
-畫面固定 1920 × 1080、**不捲動**，所以材料長度有上限。六篇共用同一套排版（文本 22px／行距 1.6／段距 10px），實測可容納：
+畫面固定 1920 × 1080、**不捲動**，所以材料長度有上限。六篇共用同一套排版（考試介面：全白底、左右分欄、計時器在上方工具列；文本欄內寬 904px、y 170–1040；文本 22px／行距 1.6／段距 10px），實測可容納：
 
 | 項目 | 上限 | 目前正式文本 |
 |---|---|---|
-| 一篇文本 | 約 **280 英文詞**、5 段（標題佔一行時；最長的 6 號剩約 20px） | 213–281 詞、3–5 段 |
+| 一篇文本 | 約 **280 英文詞**、5 段（標題佔一行時；最長的 type2B、type3B 剩約 32px。段距試過 30px、20px 都會溢出，所以維持 10px） | 213–281 詞、3–5 段 |
 | 每篇題數 | 2 題時作答區還很寬裕；3 題也放得下 | 2 題 |
 | 單一選項長度 | 2 題時選項折成兩行也放得下 | 最長約 160 字元（折兩行） |
 | 練習文本 | 約正式文本三分之二、2 題 | 146 詞、2 題 |
@@ -304,7 +306,9 @@ python3 pilot_limits.py 某個資料夾 --median   # 人數少、標準差不穩
 | 文本類型數與名稱 | 3 類＝答案結構：唯一解／多重解／無解；A 篇＝說明文、B 篇＝論辯文 | — |
 | 練習文本 | 仍是示範文本（Why Bread Rises，2 題，`demo: true`） | 視需要 |
 | 各篇寬鬆／緊迫秒數、前導平均 | 暫填寬鬆＝緊迫＝180 秒（3 分鐘）、`pilotMean_s: 120` | 前導實驗 → `pilot_limits.py` |
-| STAI 6 題題目文字 | 已填入 `materials.js`（順序：tense, upset, worried, calm, relaxed, content）；計分邏輯（第 1、15、16 題反向、總分 × 20 ÷ 6）已完成 | —（正式施測前仍須取得授權） |
+| 狀態焦慮：VAS-A | 2026-10-11 起改用電腦化焦慮視覺類比量表（Abend et al., 2014, p.448）：單題 “How anxious do you feel right now?”，水平線（**不照原文 100 公釐**，改與 NASA 量尺同寬 1080 設計像素，整組置於畫面正中；計分是相對位置不受影響）、左 calm 右 anxious、游標起始在中點、不畫刻度不顯示數字；分數＝定位點到左端的相對距離四捨五入成 **0–30**，另存 `pos`（0–1）。本網站追加：至少點選或拖曳一次才能按 Next（記 `moved`、`first_move_ms`）。前測一次、每回合後第一個 | — |
+| **螢幕實體寬度 `screenWidthMm`** | `design.js` 預設 531（24 吋 16:9）。只用來把 VAS-A 線長換算成實體公釐記在事件紀錄（預設約 299 公釐），不影響畫面與計分 | **使用者：到現場用尺量實驗螢幕「可視區」寬度（公釐）後填入** |
+| STAI 6 題 | 2026-10-11 起**不施測**（不在任何清單）；`materials.js` 的定義與 `stai-items.local.js` 載入先保留，要加回就把 `'stai'` 放回 `design.js` 的清單 | — |
 | NASA-TLX | 已用 NASA 公開的英語原版定義（6 分量表、21 刻度、0–100、不做兩兩比較加權） | — |
 | 同學量表 | `materials.js` 的 `peer` 插槽有 1 題示範題；預設不在 `roundQuestionnaires` 內，要啟用就把 `'peer'` 加進去 | 同學 |
 | 後測問卷 | `postQuestionnaires: []`（空清單；為空時結束畫面前自動略過） | 使用者 |

@@ -14,12 +14,15 @@
     --ink: #1f2933;        /* 文本與題目字色 */
     --muted: #64748b;
     --line: #dbe2ea;       /* 卡片邊框 */
-    --page: #eef2f7;       /* 頁面底色（冷灰） */
+    --page: #ffffff;       /* 頁面底色：考試介面全白 */
     --card: #ffffff;
     --soft: #f6f8fb;       /* 題目卡片底色 */
-    --head: #0f1c2e;       /* 頂端標題列（深海軍藍） */
-    --accent: #0e7490;     /* 強調色：選取、送出按鈕 */
-    --accent-soft: #e6f4f7;
+    --head: #1f2d3d;       /* 頂端工具列 */
+    --head-muted: #b8c4d1; /* 工具列上的淺灰字 */
+    --accent: #1f5f7a;     /* 主色：題號、選取框、送出按鈕 */
+    --accent-soft: #e6f2f6;
+    --divider: #d6dde5;    /* 兩欄分隔線、選項外框 */
+    --para-gap: 10px;      /* 文本段距；開始畫面的版面預檢用同一個值 */
     --timer: #3d5a78;      /* 計時器顏色，整回合不變色 */
     --bg: #0f1c2e;
     --warn: #b45309; --warn-soft: #fef3e2;
@@ -38,59 +41,55 @@
   .scr { position: absolute; left: 0; top: 64px; width: 1920px; height: 1016px; display: none; }
   .scr.on { display: block; }
 
-  /* 頂端標題列 y 0–64 */
+  /* 頂端工具列 y 0–64：左＝「Reading Test · Round n of N」一段文字；右＝計時器（全部回合只放在這裡） */
   #topbar { position: absolute; left: 0; top: 0; width: 1920px; height: 64px; background: var(--head);
-    color: #e2e8f0; display: flex; align-items: center; justify-content: space-between; padding: 0 48px; }
-  #topbar .brand { display: flex; align-items: center; gap: 14px; font-size: 22px; font-weight: 600; letter-spacing: 2px; }
-  #topbar .logo { width: 26px; height: 26px; border-radius: 7px; border: 2px solid #5eb8cc;
-    display: grid; place-items: center; }
-  #topbar .logo::after { content: ''; width: 8px; height: 8px; border-radius: 2px; background: #5eb8cc; }
-  #topbar .round { font-size: 18px; color: #94a3b8; letter-spacing: 1px; }
-  #topbar .round b { color: #e2e8f0; font-weight: 600; font-family: "SF Mono", Menlo, Consolas, monospace; }
-
-  /* ── 測驗畫面（座標皆為整張 1920×1080 版面座標；.scr 已下移 64px，故 top 減 64） ── */
-  /* 左欄：文本區 x 48–1048, y 96–1040
-     字級與行距：英文 22px／行距 1.6（行高約 35px）、段距 10px；六篇共用同一套版面，
-     最長的一篇（約 280 詞、5 段）放得下；超出時開始畫面的版面檢查會先警告 */
-  #text-area { position: absolute; left: 48px; top: 32px; width: 1000px; height: 944px; padding: 40px 48px; overflow: hidden; }
-  #text-area h1 { font-size: 30px; font-weight: 600; line-height: 1.4; margin-bottom: 22px; }
-  #text-area p { font-size: 22px; line-height: 1.6; margin-bottom: 10px; text-align: left; }
-
-  /* 右欄上方：計時器（時間標記）x 1088–1872, y 96–236 ── 數字倒數，全部回合樣式相同、持續顯示 */
-  #timer-card { position: absolute; left: 1088px; top: 32px; width: 784px; height: 140px;
-    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; }
-  .timer-label { font-size: 18px; color: var(--muted); letter-spacing: 2px; text-transform: uppercase; }
-  #timer-num, #info-num { font-size: 60px; font-weight: 600; color: var(--timer); letter-spacing: 2px; line-height: 1.1;
+    color: #fff; display: flex; align-items: center; justify-content: space-between; padding: 0 48px; }
+  #round-label { font-size: 17px; color: var(--head-muted); }
+  #round-label b { color: #fff; font-weight: 600; }
+  #bar-timer { display: flex; align-items: baseline; gap: 14px; visibility: hidden; }
+  .timer-label { font-size: 14px; color: var(--head-muted); letter-spacing: 1px; text-transform: uppercase; }
+  #timer-num { font-size: 30px; font-weight: 600; color: #fff; letter-spacing: 1px; line-height: 1.1;
     font-variant-numeric: tabular-nums; font-family: "SF Mono", Menlo, Consolas, monospace; }
 
-  /* 右欄下方：作答區 x 1088–1872, y 260–1040（每篇 3 題 × 4 選項放得下） */
-  #answer-area { position: absolute; left: 1088px; top: 196px; width: 784px; height: 780px;
-    display: flex; flex-direction: column; gap: 12px; }
-  .q { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 14px 22px 16px; }
-  .q-stem { font-size: 19px; line-height: 1.4; margin-bottom: 8px; display: flex; gap: 10px; }
-  .q-no { flex: none; width: 30px; height: 30px; border-radius: 8px; background: var(--soft); border: 1px solid var(--line);
-    color: var(--muted); font-size: 16px; font-weight: 600; display: grid; place-items: center;
-    font-family: "SF Mono", Menlo, Consolas, monospace; }
-  .q.answered .q-no { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); }
+  /* ── 測驗畫面（座標皆為整張 1920×1080 版面座標；.scr 已下移 64px，故 top 減 64） ──
+     全白底、不用卡片；左右兩欄以 x 1040 的 1px 直線分隔。
+     兩欄內容頂端對齊在 y 170：計時器數字底邊到第 1 題題幹頂邊須 ≥ 120px（約 3 度視角，眼動誤差約 1 度） */
+  #col-divider { position: absolute; left: 1040px; top: 0; width: 1px; height: 1016px; background: var(--divider); }
+  /* 左欄：文本區 x 48–952（內寬 904，每行字數與舊版相同）, y 170–1040
+     字級與行距：英文 22px／行距 1.6（行高約 35px）；段距見 --para-gap；超出時開始畫面的版面檢查會先警告 */
+  #text-area { position: absolute; left: 48px; top: 106px; width: 904px; height: 870px; overflow: hidden; }
+  #text-area h1, #setup #probe h1 { font-size: 28px; font-weight: 600; line-height: 1.4; margin-bottom: 20px; }
+  #text-area p, #setup #probe p { font-size: 22px; line-height: 1.6; margin-bottom: var(--para-gap); text-align: left; }
+  #text-area p:last-child, #setup #probe p:last-child { margin-bottom: 0; }
+
+  /* 右欄：作答區 x 1088–1872, y 170–1040；題目之間 1px 淺灰橫線、上下各 32px；送出列貼底 */
+  #answer-area { position: absolute; left: 1088px; top: 106px; width: 784px; height: 870px;
+    display: flex; flex-direction: column; }
+  .q + .q { border-top: 1px solid #e3e8ee; margin-top: 32px; padding-top: 32px; }
+  .q-stem { font-size: 19px; line-height: 1.4; margin-bottom: 36px; display: flex; gap: 12px; }
+  .q-no { flex: none; font-weight: 700; color: var(--accent); }
   /* 英文選項較長，單欄排列（不用兩欄，避免折行把選項擠成兩行） */
-  .q-opts { display: grid; grid-template-columns: 1fr; gap: 4px; padding-left: 40px; }
-  /* 選項是整列切換按鈕，不出現方框／✓／圓點，避免暗示可複選；點一下變深底白字，再點變回 */
+  .q-opts { display: grid; grid-template-columns: 1fr; gap: 6px; padding-left: 28px; }
+  /* 選項是整列切換按鈕，不出現方框／✓／圓點，避免暗示可複選 */
   .q-opts .opt { font: inherit; font-size: 17px; line-height: 1.35; text-align: left; color: var(--ink); cursor: pointer;
-    padding: 5px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--soft); }
-  /* 選取時只變色、不變粗，避免字寬改變導致折行、按鈕變高 */
-  .q-opts .opt[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: #fff; }
+    padding: 8px 14px; border: 1px solid var(--divider); border-radius: 6px; background: #fff; }
+  /* 選取＝淺色底＋2px 主色框＋粗體深色字：畫面亮度幾乎不變（瞳孔對亮度敏感）。
+     框加粗 1px 就把內距減 1px；粗體用描邊模擬，字寬不變，按鈕不會因折行而變高 */
+  .q-opts .opt[aria-pressed="true"] { background: var(--accent-soft); border: 2px solid var(--accent); padding: 7px 13px;
+    color: #123d50; -webkit-text-stroke: .8px currentColor; }
   .q-opts .opt:focus { outline: none; }
   .q-opts .opt:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
-  #submit-row { margin-top: auto; display: flex; align-items: center; justify-content: flex-end; gap: 22px; }
-  #progress { font-size: 18px; color: var(--muted); letter-spacing: 1px; }
-  #submit { font-size: 21px; font-weight: 600; letter-spacing: 2px;
-    padding: 12px 44px; border: none; border-radius: 10px; background: var(--accent); color: #fff; cursor: pointer; }
+  #submit-row { margin-top: auto; display: flex; align-items: center; justify-content: flex-end; gap: 24px; }
+  #progress { font-size: 17px; color: #5d6b7a; }
+  #submit, #confirm .btn { font-size: 19px; font-weight: 600; letter-spacing: 0;
+    padding: 12px 40px; border: none; border-radius: 6px; background: var(--accent); color: #fff; cursor: pointer; }
 
   /* 送出確認 */
   #confirm { position: absolute; inset: 0; background: rgba(15, 28, 46, .35); display: none;
     align-items: center; justify-content: center; }
   #confirm.on { display: flex; }
-  #confirm .card { width: 620px; padding: 40px 44px 32px; text-align: center; }
+  #confirm .card { width: 620px; padding: 40px 44px 32px; text-align: center; border-radius: 8px; border-color: var(--divider); }
+  #confirm .btn:not(.primary) { background: #fff; color: var(--ink); border: 1px solid var(--divider); padding: 11px 32px; }
   #confirm p { font-size: 24px; line-height: 1.6; margin-bottom: 8px; }
   #confirm .sub { font-size: 19px; color: var(--muted); margin-bottom: 28px; }
   .btns { display: flex; gap: 16px; justify-content: center; }
@@ -106,14 +105,13 @@
   .center .sub { font-size: 23px; line-height: 1.7; color: var(--muted); }
   .center .btn { font-size: 24px; padding: 16px 64px; letter-spacing: 2px; }
 
-  /* ── 計時器說明畫面（練習回合之後約 10 秒）：計時器放在正式回合的同一個位置 ── */
-  #info-timer { position: absolute; left: 1088px; top: 32px; width: 784px; height: 140px;
-    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; }
-  #info-text { position: absolute; left: 48px; top: 260px; width: 1000px; padding: 48px 56px;
+  /* ── 計時器說明畫面（練習回合之後約 10 秒）：用工具列上同一個計時器示範倒數；說明文字在畫面中央，箭頭指向右上角計時器 ── */
+  #info-arrow { position: absolute; top: 14px; transform: translateX(-50%); text-align: center;
+    font-size: 19px; color: var(--accent); line-height: 1.3; }
+  #info-arrow .tip { font-size: 34px; display: block; }
+  #info-text { position: absolute; left: 360px; top: 300px; width: 1200px; text-align: center;
     font-size: 30px; line-height: 1.7; }
   #info-text .sub { font-size: 21px; color: var(--muted); margin-top: 18px; line-height: 1.6; }
-  #info-arrow { position: absolute; left: 1088px; top: 188px; width: 784px; text-align: center;
-    font-size: 19px; color: var(--muted); letter-spacing: 1px; }
 
   /* ── 前導模式的自估時間題 ── */
   #est-card { position: absolute; left: 410px; top: 230px; width: 1100px; padding: 56px 64px; }
@@ -151,6 +149,17 @@
   .tlx-tick.sel::after { content: ''; position: absolute; left: 15px; top: 16px; width: 22px; height: 22px; border-radius: 50%;
     background: var(--accent); }
   .tlx-ends { display: flex; justify-content: space-between; width: 1080px; font-size: 18px; color: var(--muted); }
+
+  /* VAS-A：整組置於畫面正中；水平線與 NASA 量尺同寬（寬度由 JS 依 materials.js 的 lengthPx 設定）、不畫刻度、不顯示數字；游標起始在中點 */
+  .vas { height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; padding-bottom: 40px; }
+  .vas-q { font-size: 30px; line-height: 1.5; text-align: center; margin-bottom: 80px; }
+  .vas-track { position: relative; height: 64px; cursor: pointer; touch-action: none; user-select: none; }
+  .vas-track::before { content: ''; position: absolute; left: 0; right: 0; top: 31px; height: 3px; background: #64748b; }
+  .vas-thumb { position: absolute; top: 12px; width: 20px; height: 40px; margin-left: -10px; border-radius: 5px;
+    background: #fff; border: 2px solid var(--accent); box-shadow: 0 1px 3px rgba(15, 28, 46, .2); pointer-events: none; }
+  .vas-ends { display: flex; justify-content: space-between; font-size: 22px; color: var(--muted); margin-top: 14px; }
+  .vas-ends span { transform: translateX(-50%); }
+  .vas-ends span:last-child { transform: translateX(50%); }
 
   /* ── 結束畫面右下角的「再下載一次」：刻意不顯眼 ── */
   #redownload { position: absolute; right: 28px; bottom: 24px; font-size: 14px; color: #a8b4c4;
@@ -190,18 +199,16 @@
   #start-btn:disabled { opacity: .4; cursor: default; }
   /* 版面檢查用的隱藏量測區（與文本區同寬同字級） */
   /* 字型要與受試者畫面相同（#setup 用中文字型，不設定會被繼承而量錯） */
-  #probe { position: absolute; left: -99999px; top: 0; width: 1000px; padding: 40px 48px; visibility: hidden;
+  #probe { position: absolute; left: -99999px; top: 0; width: 904px; visibility: hidden;
     font-family: "Inter", "Helvetica Neue", Helvetica, Arial, system-ui, sans-serif; }
-  #probe h1 { font-size: 30px; font-weight: 600; line-height: 1.4; margin-bottom: 22px; }
-  #probe p { font-size: 22px; line-height: 1.6; margin-bottom: 10px; text-align: left; }
 </style>
 </head>
 <body>
 
 <div id="stage">
   <header id="topbar">
-    <div class="brand"><span class="logo"></span>Reading Test</div>
-    <div class="round" id="round-label">Round <b id="round-now">1</b><span id="round-total"> / 6</span></div>
+    <div id="round-label"><b>Reading Test</b><span id="round-part"></span></div>
+    <div id="bar-timer"><span class="timer-label">Time remaining</span><span id="timer-num">00:00</span></div>
   </header>
 
   <!-- Next／休息／等待：共用同一個畫面 -->
@@ -226,11 +233,8 @@
   </section>
 
   <section class="scr" id="scr-trial">
-    <section id="text-area" class="card"></section>
-    <section id="timer-card" class="card">
-      <div class="timer-label">Time remaining</div>
-      <div id="timer-num">00:00</div>
-    </section>
+    <div id="col-divider"></div>
+    <section id="text-area"></section>
     <section id="answer-area"></section>
     <div id="confirm"><div class="card">
       <p>Are you sure you want to submit?</p>
@@ -240,12 +244,8 @@
   </section>
 
   <section class="scr" id="scr-info">
-    <section id="info-timer" class="card">
-      <div class="timer-label">Time remaining</div>
-      <div id="info-num">00:10</div>
-    </section>
-    <div id="info-arrow">▲ here</div>
-    <section id="info-text" class="card">
+    <div id="info-arrow"><span class="tip">▲</span>here</div>
+    <section id="info-text">
       During the test, the remaining time will be shown here.
       <div class="sub">The clock counts down to zero. When it reaches zero, the round ends automatically and your answers are saved.</div>
     </section>
@@ -309,12 +309,15 @@ function fit() {
 addEventListener('resize', fit);
 fit();
 
-const showScreen = id => document.querySelectorAll('.scr').forEach(s => s.classList.toggle('on', s.id === id));
-// 回合標籤：練習顯示 Practice；正式回合顯示 Round n / 總回合數（總數由順序表長度決定，不寫死）
+// 換畫面時一律先藏起工具列計時器；正式回合（render）與計時器說明畫面才把它打開
+const showScreen = id => {
+  document.querySelectorAll('.scr').forEach(s => s.classList.toggle('on', s.id === id));
+  $('bar-timer').style.visibility = 'hidden';
+};
+// 回合標籤（工具列左側，一段文字）：練習＝Reading Test · Practice；正式＝Reading Test · Round n of N（N 由順序表長度決定，不寫死）；
+// 其他畫面只顯示 Reading Test
 function setRound(r, total) {
-  $('round-label').style.visibility = r == null ? 'hidden' : 'visible';
-  if (r === 0) { $('round-now').textContent = 'Practice'; $('round-label').firstChild.textContent = ''; $('round-total').textContent = ''; }
-  else { $('round-label').firstChild.textContent = 'Round '; $('round-now').textContent = r; $('round-total').textContent = total ? ` / ${total}` : ''; }
+  $('round-part').textContent = r == null ? '' : r === 0 ? ' · Practice' : ` · Round ${r}${total ? ` of ${total}` : ''}`;
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
@@ -391,11 +394,11 @@ function expandOrder(pid) {
 
 // 版面預檢：用與文本區同寬同字級的隱藏區塊量每一篇，先抓出會被裁掉的文本
 function precheckPassages() {
-  const probe = $('probe'), limitH = 944 - 80;      // 文本區高度扣掉上下內距
+  const probe = $('probe'), limitH = 870;            // 文本區高度（y 170–1040）
   const bad = [];
   Object.values(M.passages || {}).forEach(p => {
     probe.innerHTML = `<h1>${p.title}</h1>` + (p.paras || []).map(t => `<p>${t}</p>`).join('');
-    if (probe.scrollHeight - 80 > limitH + 1) bad.push(`${p.id || p.title}（約 ${wordsOf(p)} 詞）`);
+    if (probe.scrollHeight > limitH + 1) bad.push(`${p.id || p.title}（約 ${wordsOf(p)} 詞）`);
   });
   probe.innerHTML = '';
   return bad;
@@ -544,8 +547,15 @@ function layoutInfo(cfg, p) {
     return { region, x: Math.round(r.left + ox), y: Math.round(r.top + oy),
              w: Math.round(r.width), h: Math.round(r.height) };
   };
-  const regions = [box($('text-area'), 'text'), box($('answer-area'), 'questions')];
-  if (cfg.timed) regions.push(box($('timer-card'), 'timer'));
+  // 兩欄都不用卡片，記「內容的外框」：文本＝標題頂到最後一段底；題目＝第 1 題題幹頂到送出列底
+  const contentBox = (el, region) => {
+    const rs = [...el.children].map(c => c.getBoundingClientRect());
+    const l = Math.min(...rs.map(r => r.left)), t = Math.min(...rs.map(r => r.top));
+    const rt = Math.max(...rs.map(r => r.right)), b = Math.max(...rs.map(r => r.bottom));
+    return box({ getBoundingClientRect: () => ({ left: l, top: t, width: rt - l, height: Math.min(b, el.getBoundingClientRect().bottom) - t }) }, region);
+  };
+  const regions = [contentBox($('text-area'), 'text'), contentBox($('answer-area'), 'questions')];
+  if (cfg.timed) regions.push(box($('bar-timer'), 'timer'));      // 工具列計時器（標籤＋數字的外框）
   const ta = $('text-area');
   return { passageId: cfg.passageId, passageTitle: p.title, demoPassage: !!p.demo,
     words: M.words(p), nItems: p.questions.length, regions,
@@ -559,11 +569,11 @@ function render(cfg) {
   setRound(cfg.round, Session.total);
   $('text-area').innerHTML = `<h1>${p.title}</h1>` + p.paras.map(t => `<p>${t}</p>`).join('');
   $('answer-area').innerHTML = p.questions.map((q, i) => `
-    <div class="q" id="q${i}"><div class="q-stem"><span class="q-no">${i + 1}</span><span>${q.stem}</span></div><div class="q-opts">
+    <div class="q" id="q${i}"><div class="q-stem"><span class="q-no">${i + 1}.</span><span>${q.stem}</span></div><div class="q-opts">
       ${q.opts.map((o, j) => `<button type="button" class="opt" data-q="${i}" data-v="${j}" aria-pressed="false">${'ABCD'[j]}. ${o}</button>`).join('')}
     </div></div>`).join('') +
     `<div id="submit-row"><span id="progress"></span><button id="submit">Submit</button></div>`;
-  $('timer-card').style.visibility = cfg.timed ? 'visible' : 'hidden';
+  $('bar-timer').style.visibility = cfg.timed ? 'visible' : 'hidden';
   $('timer-num').textContent = cfg.timed ? fmt(cfg.limit_s) : '00:00';
   $('confirm').classList.remove('on');
   updateProgress(p);
@@ -699,13 +709,17 @@ function runTimerInfo() {
   const total = (Session.state.session || {}).timerInfoSeconds || 10;
   setRound(null);
   showScreen('scr-info');
+  $('bar-timer').style.visibility = 'visible';
+  // 箭頭放在工具列計時器正下方（換算成版面座標）
+  const tr = $('bar-timer').getBoundingClientRect();
+  $('info-arrow').style.left = ((tr.left + tr.width / 2 - view.x) / view.scale) + 'px';
   Session.log({ type: 'timer_info_start', seconds: total });
   const t0 = performance.now();
   let fired = false;
   const tick = () => {
     if (fired) return;
     const remain = total * 1000 - (performance.now() - t0);
-    $('info-num').textContent = fmt(Math.max(0, Math.ceil(remain / 1000)));
+    $('timer-num').textContent = fmt(Math.max(0, Math.ceil(remain / 1000)));
     if (remain <= 0) { fired = true; Session.log({ type: 'timer_info_done' }); nextStage(); return; }
     requestAnimationFrame(tick);
   };
@@ -714,6 +728,11 @@ function runTimerInfo() {
 }
 
 // ── 量表 ──
+// VAS-A：線段長度用設計像素（q.lengthPx）；實體長度(mm)＝lengthPx × 螢幕可視寬(mm) ÷ 1920，只記錄不影響計分；
+// 分數＝pos × 等分數，四捨五入成整數（相對位置，與線段長度無關）
+const vasLengthPx = q => q.lengthPx || 1080;
+const vasScore = (pos, q) => Math.round(pos * (q.partitions || 30));
+
 function runQuestionnaires(st) {
   if (current) { current.stop(); current = null; }
   const list = (st.list || []).slice();
@@ -730,10 +749,19 @@ function runQuestionnaires(st) {
     const rel = () => Math.round(performance.now() - t0);
     $('q-title').textContent = q.title;
     $('q-intro').textContent = q.intro;
+    $('q-head').style.display = q.type === 'vas' ? 'none' : '';      // VAS-A 只有一題，題目與量尺整組放畫面正中
+    $('q-next').disabled = q.type === 'vas';                          // VAS-A：至少點選或拖曳一次才能按 Next
     $('q-step').textContent = list.length > 1 ? `Questionnaire ${k + 1} of ${list.length}` : '';
     $('q-next').textContent = k === list.length - 1 ? 'Finish' : 'Next';
     $('q-body').scrollTop = 0;
+    const vasL = q.type === 'vas' ? vasLengthPx(q) : 0;
+    const vas = { pos: 0.5, moved: false, firstMoveMs: null };       // 游標起始在中點
     $('q-body').innerHTML = q.items.map((it, i) => {
+      if (q.type === 'vas') {
+        return `<div class="vas" id="it${i}"><div class="vas-q">${it.text}</div>
+          <div class="vas-track" id="vas-track" style="width:${vasL}px"><div class="vas-thumb" id="vas-thumb" style="left:${vasL / 2}px"></div></div>
+          <div class="vas-ends" style="width:${vasL}px"><span>${it.low}</span><span>${it.high}</span></div></div>`;
+      }
       if (q.type === 'tlx') {
         const ticks = Array.from({ length: 21 }, (_, j) =>
           `<button class="tlx-tick${j === 10 ? ' mid' : ''}" data-i="${i}" data-v="${j}" style="left:${j * 54}px" aria-label="${j}"></button>`).join('');
@@ -745,6 +773,34 @@ function runQuestionnaires(st) {
       return `<div class="item" id="it${i}"><div class="item-text"><span class="item-no">${i + 1}.</span><span>${it.text}</span></div>
         <div class="lik">${opts.map((o, j) => `<button data-i="${i}" data-v="${j}">${o.t}</button>`).join('')}</div></div>`;
     }).join('');
+    if (q.type === 'vas') {
+      // 點選或拖曳：按下就把游標移到該處，拖曳時跟著走；放開時記一列（option＝pos，value＝0–30 分）
+      const track = $('vas-track'), thumb = $('vas-thumb');
+      const posAt = e => {
+        const r = track.getBoundingClientRect();
+        return Math.round(Math.min(1, Math.max(0, (e.clientX - r.left) / r.width)) * 1e4) / 1e4;
+      };
+      const place = p => { vas.pos = p; thumb.style.left = (p * vasL) + 'px'; };
+      let dragging = false, prevPos = null;
+      track.onpointerdown = e => {
+        if (e.button !== 0) return;
+        dragging = true; prevPos = vas.moved ? vas.pos : null;
+        track.setPointerCapture(e.pointerId);
+        if (!vas.moved) { vas.moved = true; vas.firstMoveMs = rel(); $('q-next').disabled = false; }
+        place(posAt(e));
+      };
+      track.onpointermove = e => { if (dragging) place(posAt(e)); };
+      track.onpointerup = track.onpointercancel = e => {
+        if (!dragging) return;
+        dragging = false;
+        if (e.type === 'pointerup') place(posAt(e));
+        ans[0] = vas.pos;
+        Session.questionnaireClick({ name, context: st.context, round: st.round, item: 1, itemLabel: q.items[0].key,
+          optionText: vas.pos.toFixed(4), value: vasScore(vas.pos, q),
+          isChange: prevPos !== null && prevPos !== vas.pos, prevOptionText: prevPos === null ? '' : prevPos.toFixed(4),
+          t_ms: rel() });
+      };
+    }
     const optionText = (i, v) => q.type === 'tlx' ? String(v) : ((q.items[i].options || q.options)[v] || {}).t;
     const scoreValue = (i, v) => q.type === 'tlx' ? v : ((q.items[i].options || q.options)[v] || {}).v;
     // 量表的每一次點選也記一列（含是否為改答）
@@ -762,6 +818,17 @@ function runQuestionnaires(st) {
         t_ms: rel() });
     };
     $('q-next').onclick = () => {
+      if (q.type === 'vas') {
+        if (!vas.moved || ans[0] === null) return;
+        const values = [vasScore(vas.pos, q)];
+        Session.questionnaireDone({ name, context: st.context, round: st.round, answers: [vas.pos], values,
+          score: (SC[name] || SC.vasa)(values, q), t_ms: rel(),
+          vas: { pos: vas.pos, moved: vas.moved, firstMoveMs: vas.firstMoveMs,
+                 lengthPx: vasL, screenWidthMm: D.screenWidthMm || 531,
+                 lengthMm: Math.round(vasL * (D.screenWidthMm || 531) / 1920 * 10) / 10 } });
+        k++;
+        return next();
+      }
       const miss = ans.map((a, i) => a === null ? i : -1).filter(i => i >= 0);
       if (miss.length) {
         miss.forEach(i => $(`it${i}`).classList.add('missing'));

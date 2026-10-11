@@ -167,6 +167,24 @@ window.MATERIALS = {
   // 出現順序由 design.js 的 roundQuestionnaires／preQuestionnaires／postQuestionnaires 決定。
   questionnaires: {
 
+    // 電腦化焦慮視覺類比量表 (computerized Visual Analog Scale for Anxiety, VAS-A;
+    // Abend, Dan, Maoz, Raz, & Bar-Haim, 2014, J. Behav. Ther. Exp. Psychiatry, 45, 447–453, p.448 與 Fig. 1)
+    // 原文：100 公釐水平線、分 30 等分；左端 calm、右端 anxious；游標起始在中點；
+    // 分數＝定位點到左端的相對距離四捨五入成 0–30 整數，受試者看不到數值。
+    // 本網站：線長不照原文 100 公釐，改與 NASA 量尺同寬 1080 設計像素（2026-10-11 使用者決定：100 公釐在畫面上太小、
+    // 與其他畫面比例不協調）；計分是相對位置，不受線長影響。實體長度依 design.js 的 screenWidthMm 換算後記在事件紀錄。
+    // 不畫刻度、不顯示數字；
+    // 另存原始比例 pos（0–1，小數 4 位）。追加（原文沒有）：至少點選或拖曳一次才能按 Next。
+    vasa: {
+      title: '', intro: '',
+      type: 'vas',
+      lengthPx: 1080,
+      partitions: 30,
+      items: [
+        { key: 'anxiety', text: 'How anxious do you feel right now?', low: 'calm', high: 'anxious' },
+      ],
+    },
+
     // NASA 任務負荷指標 (NASA Task Load Index, NASA-TLX)
     // 6 個分量表各一題，21 刻度（20 個等距區間），分數 0–100（每格 5 分）；
     // 不做兩兩比較加權（沿用原型計分）。題目文字為 NASA 公開的英語原版定義
@@ -197,6 +215,7 @@ window.MATERIALS = {
       ],
     },
 
+    // ★ 2026-10-11 起狀態焦慮改用上面的 VAS-A，STAI 不在 design.js 任何清單裡；定義先保留，日後要加回只改 design.js。
     // 狀態焦慮量表 6 題短版 (State-Trait Anxiety Inventory – State, 6-item short form;
     // Marteau & Bekker, 1992)：原 STAI-S 第 1、3、6、15、16、17 題。
     // 第 1、15、16 題反向計分；6 題總分 × 20 ÷ 6 換算為完整版分數（20–80）。
@@ -238,6 +257,10 @@ window.MATERIALS = {
 
 // ── 計分 ──────────────────────────────────────────────────────────────────────
 window.SCORING = {
+  // VAS-A：values＝[0–30 整數]（由定位比例 pos 四捨五入而來，見 index.html 的 vasScore）
+  vasa(values) {
+    return { score: values[0] };
+  },
   nasa(answers, q) {
     const subscales = {};
     q.items.forEach((it, i) => { subscales[it.key] = answers[i] * 5; });   // 刻度 0–20 → 0–100

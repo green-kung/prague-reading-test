@@ -41,14 +41,20 @@ window.DESIGN = {
 
   // ── 3. 量表清單 ─────────────────────────────────────────────────────────────
   // 每回合後依序出現（名稱對應 materials.js 的 questionnaires）。
-  // 之後要加同學量表就把 'peer' 加進來。
-  roundQuestionnaires: ['nasa', 'stai'],
+  // VAS-A 放第一個：回合一結束先量焦慮，避免填 NASA 時焦慮已消退。
+  // STAI（'stai'）2026-10-11 起不用，定義仍留在 materials.js；之後要加同學量表就把 'peer' 加進來。
+  roundQuestionnaires: ['vasa', 'nasa'],
 
   // 到場後、練習回合前（狀態焦慮基準）
-  preQuestionnaires: ['stai'],
+  preQuestionnaires: ['vasa'],
 
   // 全部回合之後（內容待決定，先留空；程式能處理空清單）
   postQuestionnaires: [],
+
+  // ── 3b. 螢幕實體寬度（公釐）────────────────────────────────────────────────
+  // 用來把 VAS-A 線長（1080 設計像素）換算成實體公釐，記在事件紀錄（lengthMm），不影響畫面與計分。
+  // 預設 531＝24 吋 16:9 螢幕的可視區寬度（此時線長約 299 公釐）；★ 到現場用尺量好實驗螢幕「可視區」寬度後填入。
+  screenWidthMm: 531,
 
   // ── 4. 練習回合 ─────────────────────────────────────────────────────────────
   practicePassage: 'practice',   // 對應 materials.js 的 passages key

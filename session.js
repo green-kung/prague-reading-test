@@ -161,7 +161,7 @@ window.Session = (() => {
         S.session[info.context === 'pretest' ? 'pre' : 'post'][info.name] = info.score;
       }
       S.qRows.push({ context: info.context, round: info.round, name: info.name,
-        answers: info.answers, values: info.values, score: info.score, wall_time: e.wall_time });
+        answers: info.answers, values: info.values, score: info.score, vas: info.vas || null, wall_time: e.wall_time });
       persist();
       return e;
     },

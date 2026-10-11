@@ -106,7 +106,7 @@ window.Store = (() => {
       'answers', 'correct_flags', 'correct', 'n_items', 'n_scored', 'accuracy', 'rt_s', 'end_reason']
       .concat(MARKS(d).map(p => `t${p}_s`))
       .concat(['nasa_mental', 'nasa_physical', 'nasa_temporal', 'nasa_performance', 'nasa_effort', 'nasa_frustration',
-        'stai_raw', 'stai_prorated', 'practice_rt_s', 'practice_words', 'sec_per_word',
+        'vasa', 'stai_raw', 'stai_prorated', 'practice_rt_s', 'practice_words', 'sec_per_word',
         'est_s', 'wall_start', 'wall_end', 'overflow']);
   }
 
@@ -131,7 +131,7 @@ window.Store = (() => {
         r.correct, r.nItems, r.nScored, r.accuracy, r.rt_s, r.endReason]
         .concat(MARKS(d).map(p => r[`t${p}_s`]))
         .concat([nasa.mental, nasa.physical, nasa.temporal, nasa.performance, nasa.effort, nasa.frustration,
-          stai.raw, stai.prorated,
+          (r.vasa || {}).score, stai.raw, stai.prorated,
           isP ? r.practice_rt_s : '', isP ? r.practice_words : '', isP ? r.sec_per_word : '',
           r.est_s, r.wall_start, r.wall_end, r.overflow])
         .map(v => v === undefined || v === null ? '' : v);
@@ -144,7 +144,8 @@ window.Store = (() => {
   // layout.csv：一列＝某回合的一個區域（螢幕座標，供事後在 Gazepoint 資料上劃興趣區域）
   const LAYOUT_COLS = ['pid', 'round', 'region', 'x', 'y', 'w', 'h',
     'viewport_w', 'viewport_h', 'screen_w', 'screen_h'];
-  const QUEST_COLS = ['pid', 'context', 'round', 'name', 'answers', 'values', 'score', 'wall_time'];
+  // VAS-A：score＝0–30 整數；pos＝定位比例（0–1）、moved＝是否動過、first_move_ms＝第一次移動前的毫秒數（其他量表留空）
+  const QUEST_COLS = ['pid', 'context', 'round', 'name', 'answers', 'values', 'score', 'pos', 'moved', 'first_move_ms', 'wall_time'];
 
   function buildFiles(d) {
     const pid = (d.session || {}).pid;
@@ -163,7 +164,9 @@ window.Store = (() => {
       { name: 'questionnaires.csv', text: '﻿' + csv(QUEST_COLS, (d.qRows || []).map(q =>
           [pid, q.context, q.round === null || q.round === undefined ? '' : q.round, q.name,
            (q.answers || []).join(' '), (q.values || []).join(' '),
-           JSON.stringify(flat(q.score)), q.wall_time])) },
+           q.vas ? q.score.score : JSON.stringify(flat(q.score)),
+           q.vas ? q.vas.pos : '', q.vas ? (q.vas.moved ? 1 : 0) : '', q.vas ? q.vas.firstMoveMs : '',
+           q.wall_time])) },
       { name: 'events.jsonl', text: (d.events || []).map(e => JSON.stringify(e)).join('\n') + '\n' },
       { name: 'session.json', text: JSON.stringify({ session: d.session, rounds: d.rounds }, null, 2) },
     ];
