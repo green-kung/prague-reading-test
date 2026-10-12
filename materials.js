@@ -186,30 +186,30 @@ window.MATERIALS = {
 
     // NASA 任務負荷指標 (NASA Task Load Index, NASA-TLX)
     // 6 個分量表各一題，21 刻度（20 個等距區間），分數 0–100（每格 5 分）；
-    // 不做兩兩比較加權（沿用原型計分）。題目文字為 NASA 公開的英語原版定義
-    // （Hart & Staveland, 1988 的 rating scale definitions）。
+    // 不做兩兩比較加權（沿用原型計分）。定義文字與 Hart (1986) NASA-TLX v1.0 手冊附錄 A 逐字一致
+    // （2026-10-12 對照手冊第 13 頁補上 Mental／Physical 的 "etc."、Performance 的 "set by the experimenter (or yourself)"、Frustration 的 "relaxed and complacent"）。
     nasa: {
       title: 'Task Load',
       intro: 'Think about the round you have just finished. On each scale, click the point that best matches your experience.',
       type: 'tlx',
       items: [
         { key: 'mental', label: 'Mental Demand',
-          text: 'How much mental and perceptual activity was required (e.g. thinking, deciding, calculating, remembering, looking, searching)? Was the task easy or demanding, simple or complex, exacting or forgiving?',
+          text: 'How much mental and perceptual activity was required (e.g. thinking, deciding, calculating, remembering, looking, searching, etc.)? Was the task easy or demanding, simple or complex, exacting or forgiving?',
           low: 'Low', high: 'High' },
         { key: 'physical', label: 'Physical Demand',
-          text: 'How much physical activity was required (e.g. pushing, pulling, turning, controlling, activating)? Was the task easy or demanding, slow or brisk, slack or strenuous, restful or laborious?',
+          text: 'How much physical activity was required (e.g. pushing, pulling, turning, controlling, activating, etc.)? Was the task easy or demanding, slow or brisk, slack or strenuous, restful or laborious?',
           low: 'Low', high: 'High' },
         { key: 'temporal', label: 'Temporal Demand',
           text: 'How much time pressure did you feel due to the rate or pace at which the tasks or task elements occurred? Was the pace slow and leisurely or rapid and frantic?',
           low: 'Low', high: 'High' },
         { key: 'performance', label: 'Performance',
-          text: 'How successful do you think you were in accomplishing the goals of the task? How satisfied were you with your performance in accomplishing these goals?',
+          text: 'How successful do you think you were in accomplishing the goals of the task set by the experimenter (or yourself)? How satisfied were you with your performance in accomplishing these goals?',
           low: 'Good', high: 'Poor' },
         { key: 'effort', label: 'Effort',
           text: 'How hard did you have to work (mentally and physically) to accomplish your level of performance?',
           low: 'Low', high: 'High' },
         { key: 'frustration', label: 'Frustration',
-          text: 'How insecure, discouraged, irritated, stressed and annoyed versus secure, gratified, content and relaxed did you feel during the task?',
+          text: 'How insecure, discouraged, irritated, stressed and annoyed versus secure, gratified, content, relaxed and complacent did you feel during the task?',
           low: 'Low', high: 'High' },
       ],
     },

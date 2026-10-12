@@ -328,7 +328,7 @@ python3 pilot_limits.py 某個資料夾 --median   # 人數少、標準差不穩
 | 狀態焦慮：VAS-A | 2026-10-11 起改用電腦化焦慮視覺類比量表（Abend et al., 2014, p.448）：單題 “How anxious do you feel right now?”，水平線（**不照原文 100 公釐**，改用 1080 設計像素，整組置於畫面正中；計分是相對位置不受影響）、左 calm 右 anxious、游標起始在中點、不畫刻度不顯示數字；分數＝定位點到左端的相對距離四捨五入成 **0–30**（存在 `questionnaires.csv`），另存 `pos`（0–1；summary 用這個，欄名 `vasa_pos`）。本網站追加：至少點選或拖曳一次才能按 Next（記 `moved`、`first_move_ms`）。前測一次、每回合後第一個 | — |
 | **螢幕實體寬度 `screenWidthMm`** | `design.js` 預設 531（24 吋 16:9）。只用來把 VAS-A 線長換算成實體公釐記在事件紀錄（預設約 299 公釐），不影響畫面與計分 | **使用者：到現場用尺量實驗螢幕「可視區」寬度（公釐）後填入** |
 | STAI 6 題 | 2026-10-11 起**不施測**（不在任何清單）；`materials.js` 的定義與 `stai-items.local.js` 載入先保留，要加回就把 `'stai'` 放回 `design.js` 的清單 | — |
-| NASA-TLX | 已用 NASA 公開的英語原版定義（6 分量表、21 刻度、0–100、不做兩兩比較加權）。2026-10-12 起 6 題排成兩欄、每欄 3 題，一頁放得下不用捲動 | — |
+| NASA-TLX | 定義文字與 Hart (1986) NASA-TLX v1.0 手冊附錄 A 逐字一致（2026-10-12 對照手冊補正 Mental、Physical、Performance、Frustration 四題）（6 分量表、21 刻度、0–100、不做兩兩比較加權）。2026-10-12 起 6 題排成兩欄、每欄 3 題，一頁放得下不用捲動 | — |
 | 同學量表 | `materials.js` 的 `peer` 插槽有 1 題示範題；預設不在 `roundQuestionnaires` 內，要啟用就把 `'peer'` 加進去 | 同學 |
 | 後測問卷 | `postQuestionnaires: []`（空清單；為空時結束畫面前自動略過） | 使用者 |
 | 拉丁方格順序表 | 預設 6 列 Williams 平衡（可整張換掉，見上） | 使用者 |
