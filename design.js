@@ -11,27 +11,22 @@ window.DESIGN = {
 
   // ── 1. 拉丁方格順序表 ───────────────────────────────────────────────────────
   // 每一列＝一種回合順序；受試者編號依序套用（編號 1 → 第 1 列，編號 7 → 回到第 1 列）。
-  // 每格＝ [時間限制, 文本類型, 篇別]；時間限制只能是 'loose'（寬鬆）或 'tight'（緊迫）。
+  // 每格＝ [文本類型, 篇別]。
   //
   // 下面這張是**預設表**（實作者產生，可整張換成你自己規劃的版本）：
-  //   目前設定為 3 種文本類型（N＝3）→ 2 × 3 ＝ 6 個條件、6 回合、6 列。
-  //   產生方式（詳見 README「順序表怎麼改」）：
-  //     ① 6 個條件依 (寬鬆, 緊迫) × (類型一, 類型二, 類型三) 編號 0–5；
-  //     ② 第 1 列用 Williams 平衡序列 [0, 1, 5, 2, 4, 3]（6 個處理的一階殘留效果平衡）；
-  //     ③ 第 i 列＝第 1 列每個編號加 i（模 6）；
-  //     ④ 篇別：第 i 列的類型 k，(i + k) 為偶數時「寬鬆配 A、緊迫配 B」，否則相反
-  //        → 同一類型的 A／B 篇在不同列中輪流配寬鬆與緊迫。
-  //   想重新產生（例如改成 2 或 4 類文本）：`python3 make_latin.py 4`，把印出的表貼回這裡。
+  //   目前設定為 3 種文本類型（N＝3）× A／B 兩篇 → 6 回合、6 列。
+  //   產生方式：沿用舊版 2（寬鬆／緊迫）× N 的 Williams 平衡表，2026-10-12 拿掉時間這一項、文本順序不變
+  //   （時限已全部統一 180 秒，見 materials.js）。想重新產生：`python3 make_latin.py 4`，把印出的表貼回這裡。
   //
-  // 載入時開始畫面會檢查每一列：格數＝2N、每種「時間 × 文本類型」各一次、
-  // 同一類型的 A／B 各一次（N 由 materials.js 的 passages 推導）；不合格會拒絕建立場次。
+  // 載入時開始畫面會檢查每一列：格數＝2N、同一類型的 A／B 各一次（N 由 materials.js 的 passages 推導）；
+  // 不合格會拒絕建立場次。
   latinSquare: [
-    [['loose','type1','B'], ['tight','type1','A'], ['tight','type3','A'], ['loose','type2','A'], ['loose','type3','B'], ['tight','type2','B']],
-    [['tight','type1','B'], ['loose','type2','B'], ['loose','type1','A'], ['tight','type2','A'], ['tight','type3','B'], ['loose','type3','A']],
-    [['loose','type2','A'], ['tight','type2','B'], ['tight','type1','A'], ['loose','type3','B'], ['loose','type1','B'], ['tight','type3','A']],
-    [['tight','type2','A'], ['loose','type3','A'], ['loose','type2','B'], ['tight','type3','B'], ['tight','type1','B'], ['loose','type1','A']],
-    [['loose','type3','B'], ['tight','type3','A'], ['tight','type2','B'], ['loose','type1','B'], ['loose','type2','A'], ['tight','type1','A']],
-    [['tight','type3','B'], ['loose','type1','A'], ['loose','type3','A'], ['tight','type1','B'], ['tight','type2','A'], ['loose','type2','B']],
+    [['type1','B'], ['type1','A'], ['type3','A'], ['type2','A'], ['type3','B'], ['type2','B']],
+    [['type1','B'], ['type2','B'], ['type1','A'], ['type2','A'], ['type3','B'], ['type3','A']],
+    [['type2','A'], ['type2','B'], ['type1','A'], ['type3','B'], ['type1','B'], ['type3','A']],
+    [['type2','A'], ['type3','A'], ['type2','B'], ['type3','B'], ['type1','B'], ['type1','A']],
+    [['type3','B'], ['type3','A'], ['type2','B'], ['type1','B'], ['type2','A'], ['type1','A']],
+    [['type3','B'], ['type1','A'], ['type3','A'], ['type1','B'], ['type2','A'], ['type2','B']],
   ],
 
   // ── 2. 時間點事件（不顯示，只記錄）───────────────────────────────────────────
@@ -68,6 +63,6 @@ window.DESIGN = {
 
   // ── 5. 前導模式（布拉格第 1 天）─────────────────────────────────────────────
   // 前導模式由開始畫面的「前導模式（不限時）」勾選框決定，不在這裡開關。
-  // 這一項是前導模式的「可選題」：true 時每篇讀前問一題自估秒數（存成 est_s）。
+  // 這一項是前導模式的「可選題」：true 時每篇讀前問一題自估秒數（存成 est_s，只在 session.json／events.jsonl）。
   pilotEstimate: false,
 };

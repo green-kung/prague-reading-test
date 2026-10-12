@@ -98,51 +98,40 @@ window.Store = (() => {
 
   // ── 由場次資料產生各個檔案 ──────────────────────────────────────────────────
   // D = { session, rounds, events, answers, layouts, qRows }
-  const MARKS = d => ((d.session || {}).timeMarks || [0.5, 0.25, 0.1]).map(f => String(Math.round(f * 100)));
-
-  function summaryColumns(d) {
-    return ['pid', 'latin_row', 'manual_order', 'pilot', 'round', 'time', 'text_type', 'form', 'passage_id',
-      'passage_title', 'words', 'limit_s', 'pilot_mean_s', 'rtt_group', 't_expected_s', 'rtt',
-      'answers', 'correct_flags', 'correct', 'n_items', 'n_scored', 'accuracy', 'rt_s', 'end_reason']
-      .concat(MARKS(d).map(p => `t${p}_s`))
-      .concat(['nasa_mental', 'nasa_physical', 'nasa_temporal', 'nasa_performance', 'nasa_effort', 'nasa_frustration',
-        'vasa', 'stai_raw', 'stai_prorated', 'practice_rt_s', 'practice_words', 'sec_per_word',
-        'est_s', 'wall_start', 'wall_end', 'overflow']);
+  // summary.csv：一列＝一個回合（含練習 round 0）。manual_order、pilot、時間點事件等只在 session.json／events.jsonl
+  function summaryColumns() {
+    return ['pid', 'latin_row', 'round', 'text_type', 'form', 'passage_id', 'passage_title', 'words', 'limit_s',
+      'answers', 'correct_flags', 'correct', 'n_items', 'n_scored', 'accuracy', 'rt_s', 'end_reason',
+      'first_answer_s', 'last_answer_s', 'n_remove', 'n_add', 'n_wrong_to_right', 'n_right_to_wrong',
+      'nasa_mental', 'nasa_physical', 'nasa_temporal', 'nasa_performance', 'nasa_effort', 'nasa_frustration',
+      'vasa_pos', 'vasa_moved', 'practice_rt_s', 'practice_words', 'wall_start', 'wall_end', 'overflow'];
   }
 
   function summaryRows(d) {
     const s = d.session || {}, rounds = d.rounds || {};
-    const practice = rounds['0'] || {};
-    const spw = num(practice.sec_per_word);
     return Object.keys(rounds).map(Number).sort((a, b) => a - b).map(k => {
       const r = rounds[k];
-      const nasa = (r.nasa || {}).subscales || {}, stai = r.stai || {};
+      const nasa = (r.nasa || {}).subscales || {};
       const isP = r.round === 0;
-      // 時間容忍度：群體層級（前導平均）＋個人層級（練習回合閱讀速度）
-      const limit = num(r.limit_s), words = num(r.words), pmean = num(r.pilotMean_s);
-      const rttGroup = (limit != null && pmean) ? Math.round((limit - pmean) / pmean * 1e4) / 1e4 : '';
-      const tExp = (spw && words) ? Math.round(spw * words * 100) / 100 : null;
-      const rtt = (limit != null && tExp) ? Math.round((limit - tExp) / tExp * 1e4) / 1e4 : '';
-      return [s.pid, s.latinRow, s.manualOrder ? 1 : 0, s.pilot ? 1 : 0, r.round,
-        r.time || '', r.textType || '', r.form || '', r.passageId || '', r.passageTitle || '', r.words,
-        limit == null ? '' : limit, pmean == null ? '' : pmean, rttGroup, tExp == null ? '' : tExp, rtt,
+      return [s.pid, s.latinRow, r.round, r.textType || '', r.form || '', r.passageId || '', r.passageTitle || '', r.words,
+        r.limit_s,
         (r.answers || []).map(a => a || '-').join(' '),
         (r.correctFlags || []).map(f => f === null || f === undefined ? 'NA' : (f ? 1 : 0)).join(' '),   // NA＝無解題
-        r.correct, r.nItems, r.nScored, r.accuracy, r.rt_s, r.endReason]
-        .concat(MARKS(d).map(p => r[`t${p}_s`]))
-        .concat([nasa.mental, nasa.physical, nasa.temporal, nasa.performance, nasa.effort, nasa.frustration,
-          (r.vasa || {}).score, stai.raw, stai.prorated,
-          isP ? r.practice_rt_s : '', isP ? r.practice_words : '', isP ? r.sec_per_word : '',
-          r.est_s, r.wall_start, r.wall_end, r.overflow])
+        r.correct, r.nItems, r.nScored, r.accuracy, r.rt_s, r.endReason,
+        r.first_answer_s, r.last_answer_s, r.n_remove, r.n_add, r.n_wrong_to_right, r.n_right_to_wrong,
+        nasa.mental, nasa.physical, nasa.temporal, nasa.performance, nasa.effort, nasa.frustration,
+        r.vasa_pos, r.vasa_moved === undefined ? null : (r.vasa_moved ? 1 : 0),
+        isP ? r.practice_rt_s : '', isP ? r.practice_words : '',
+        r.wall_start, r.wall_end, r.overflow]
         .map(v => v === undefined || v === null ? '' : v);
     });
   }
 
   // answers.csv：一列＝受試者的一次點選（閱讀題、量表、前後測問卷都算）
   const ANSWER_COLS = ['pid', 'context', 'round', 'source', 'item', 'item_label', 'option', 'value',
-    'correct', 'is_change', 'prev_option', 't_ms', 'wall_time'];
-  // layout.csv：一列＝某回合的一個區域（螢幕座標，供事後在 Gazepoint 資料上劃興趣區域）
-  const LAYOUT_COLS = ['pid', 'round', 'region', 'x', 'y', 'w', 'h',
+    'correct', 'action', 'prev_option', 't_ms', 'wall_time'];
+  // layout.csv：一列＝一個回合的版面檢查（AOI 座標改由 index.html?aoi 每篇匯出一份固定表）
+  const LAYOUT_COLS = ['pid', 'round', 'passage_id', 'fullscreen', 'scale',
     'viewport_w', 'viewport_h', 'screen_w', 'screen_h'];
   // VAS-A：score＝0–30 整數；pos＝定位比例（0–1）、moved＝是否動過、first_move_ms＝第一次移動前的毫秒數（其他量表留空）
   const QUEST_COLS = ['pid', 'context', 'round', 'name', 'answers', 'values', 'score', 'pos', 'moved', 'first_move_ms', 'wall_time'];
@@ -154,13 +143,13 @@ window.Store = (() => {
       return sc.subscales || Object.fromEntries(Object.entries(sc).filter(([, v]) => typeof v !== 'object'));
     };
     return [
-      { name: 'summary.csv', text: '﻿' + csv(summaryColumns(d), summaryRows(d)) },
+      { name: 'summary.csv', text: '﻿' + csv(summaryColumns(), summaryRows(d)) },
       { name: 'answers.csv', text: '﻿' + csv(ANSWER_COLS, (d.answers || []).map(a =>
           [pid, a.context, a.round, a.source, a.item, a.itemLabel, a.option, a.value,
            a.correct === null || a.correct === undefined ? '' : (a.correct ? 1 : 0),
-           a.isChange ? 1 : 0, a.prevOption, a.t_ms, a.wall_time])) },
+           a.action, a.prevOption, a.t_ms, a.wall_time])) },
       { name: 'layout.csv', text: '﻿' + csv(LAYOUT_COLS, (d.layouts || []).map(l =>
-          [pid, l.round, l.region, l.x, l.y, l.w, l.h, l.viewport_w, l.viewport_h, l.screen_w, l.screen_h])) },
+          [pid, l.round, l.passageId, l.fullscreen ? 1 : 0, l.scale, l.viewport_w, l.viewport_h, l.screen_w, l.screen_h])) },
       { name: 'questionnaires.csv', text: '﻿' + csv(QUEST_COLS, (d.qRows || []).map(q =>
           [pid, q.context, q.round === null || q.round === undefined ? '' : q.round, q.name,
            (q.answers || []).join(' '), (q.values || []).join(' '),

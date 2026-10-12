@@ -3,7 +3,7 @@
 母計畫 AI-READ 在布拉格捷克理工大學執行的考試閱讀實驗系統。
 設計依據與開發規格放在研究者的 Obsidian 筆記庫（不隨本倉庫公開）。
 
-**設計**：2（時間限制：寬鬆 loose／緊迫 tight）× N（文本類型）受試者內設計，共 2N 回合。
+**設計**：N（文本類型）× A／B 兩篇的受試者內設計，共 2N 回合；每回合時限一律 180 秒（2026-10-08 起取消寬鬆／緊迫兩種時限）。
 目前設定檔為 **3 類文本、6 回合**，但程式一律**由設定檔推導**回合數與條件，**沒有寫死 6 或 3**；
 改成 2 類或 4 類只要改設定檔（已實測 2 類 4 回合可正常跑完）。
 
@@ -22,9 +22,10 @@ Gazepoint GP3 在**同一台電腦**上由 Gazepoint 自己的軟體校正與錄
 
 - 每一筆事件都記**含時區的牆上時間到毫秒**（例如 `2026-10-20T14:02:31.123+02:00`）。
 - `summary.csv` 每回合有 `wall_start`、`wall_end`。
-- 每回合另記**文本區／題目區／計時器的螢幕座標**（`layout.csv`），事後可照著在 Gazepoint 資料上劃興趣區域。
+- 興趣區域（AOI）的座標**不在每場記錄**：版面固定在 1920×1080 舞台，同一篇文本人人位置相同，
+  所以用 `index.html?aoi` **每篇匯出一份固定表**（見下方「AOI 座標表」）。每場的 `layout.csv` 只記每回合是否全螢幕、縮放比例，供事後確認畫面是原尺寸。
 
-⚠️ **按 Start 時會自動進入全螢幕**，`layout.csv` 的螢幕座標才會跟眼動儀看到的畫面對得上。
+⚠️ **按 Start 時會自動進入全螢幕**；全螢幕且螢幕為 1920×1080 時（`layout.csv` 的 `fullscreen = 1`、`scale = 1`），AOI 表的設計座標就等於眼動儀的螢幕座標。
 施測中請不要離開全螢幕（離開會寫一筆 `fullscreen_exit` 事件）。
 
 ---
@@ -76,36 +77,35 @@ Gazepoint GP3 在**同一台電腦**上由 Gazepoint 自己的軟體校正與錄
 ### 順序表怎麼改（`design.js` 的 `latinSquare`）
 
 每一列是一種回合順序，**受試者編號依序套用**：編號 1 → 第 1 列、編號 2 → 第 2 列……編號等於列數 + 1 時回到第 1 列。
-每格是 `[時間限制, 文本類型, 篇別]`，時間限制只能是 `'loose'`（寬鬆）或 `'tight'`（緊迫）。
+每格是 `[文本類型, 篇別]`。
 
-**預設表的產生方式**（3 類文本 → 6 條件、6 列）：
+**預設表的來歷**（3 類文本 × A／B → 6 回合、6 列）：沿用舊版 2（寬鬆／緊迫）× 3 的 Williams 平衡表，
+2026-10-12 拿掉時間這一項，**6 列的文本順序完全不變**。舊表的排法：
 
-1. 6 個條件依 (寬鬆, 緊迫) × (類型一, 類型二, 類型三) 編號 0–5；
+1. 6 個格位依 (寬鬆, 緊迫) × (類型一, 類型二, 類型三) 編號 0–5；
 2. 第 1 列用 Williams 平衡序列 `[0, 1, 5, 2, 4, 3]`（處理數為偶數時，一張方格即可平衡一階殘留效果）；
 3. 第 i 列 ＝ 第 1 列每個編號加 i（模 6）；
-4. 篇別：第 i 列的類型 k，`(i + k)` 為偶數時「寬鬆配 A、緊迫配 B」，否則相反
-   → 同一文本類型的 A／B 兩篇在不同列中輪流配寬鬆與緊迫，不會固定哪一篇總是被趕。
+4. 篇別：第 i 列的類型 k，`(i + k)` 為偶數時「寬鬆格配 A、緊迫格配 B」，否則相反。
 
 **這張預設表可以整張換掉**。要重新產生（例如改成 2 類或 4 類文本）：
 
 ```bash
-python3 make_latin.py 4     # 印出 4 類文本的 8 列順序表，貼回 design.js
+python3 make_latin.py 4     # 印出 4 類文本的 8 列順序表（每格 [文本類型, 篇別]），貼回 design.js
 ```
 
-載入時每一列都會被檢查：**格數＝2N**、**每種「時間 × 文本類型」各出現一次**、**同一類型的 A／B 各出現一次**
+載入時每一列都會被檢查：**格數＝2N**、**同一類型的 A／B 各出現一次**
 （N 由 `materials.js` 的 `passages` 推導）。任何一列不合格就不能開始，並指出是第幾列、哪裡不對。
 
 ### 時限怎麼填（`materials.js` 每篇的 `limit`）
 
 ```js
-type1A: { …, limit: { loose: 150, tight: 90 }, pilotMean_s: 120 }
+type1A: { …, limit: 180, pilotMean_s: 120 }
 ```
 
-- `limit.loose`／`limit.tight`：該篇在寬鬆／緊迫條件下的作答秒數。
-- `pilotMean_s`：前導實驗「不限時」的平均作答秒數 → 群體層級時間容忍度的分母。
+- `limit`：該篇的作答秒數（目前六篇都是 180）。
+- `pilotMean_s`：前導實驗「不限時」的平均作答秒數；只記在 `session.json` 的 `plan`，不進 `summary.csv`。
+  ⚠️ 目前的 120 是演示用隨意設定的數字（非文獻或 meeting 依據）。
 - 填 `null` 時開始畫面會顯示警告；該篇若真的沒有秒數就會以不限時進行，並在事件紀錄留一筆警告。
-
-⚠️ **目前寬鬆、緊迫都暫填 180 秒（3 分鐘，兩條件沒有時間差）；`pilotMean_s: 120` 是演示用隨意設定的數字（非文獻或 meeting 依據）。正式施測前必須換掉。**
 
 ---
 
@@ -129,23 +129,20 @@ type1A: { …, limit: { loose: 150, tight: 90 }, pilotMean_s: 120 }
 | 檔案 | 內容 |
 |---|---|
 | `summary.csv` | 每回合一列（含練習的 `round = 0`）；欄位見下 |
-| `answers.csv` | **每一次點選一列**：閱讀題、回合後量表、前後測問卷都算，含是否為改答 |
-| `layout.csv` | 每回合各區域的**螢幕座標**，供事後在 Gazepoint 資料上劃興趣區域 |
+| `answers.csv` | **每一次點選一列**：閱讀題、回合後量表、前後測問卷都算，含動作類型（`action`） |
+| `layout.csv` | **版面檢查**，每回合一列：是否全螢幕、縮放比例、視窗與螢幕尺寸（AOI 座標另見「AOI 座標表」） |
 | `questionnaires.csv` | 每份問卷一列：編號、場合（round／pretest／posttest）、回合、名稱、各題作答、計分值、分數、`pos`／`moved`／`first_move_ms`（只有 VAS-A 有值）、牆上時間 |
 | `events.jsonl` | 所有事件；每筆都有 `client_ms`（毫秒時間戳）與 `wall_time`（含時區的 ISO 8601，到毫秒） |
 | `session.json` | 場次設定、回合順序、前後測分數、各回合完整結果 |
 
-### `summary.csv` 欄位（42 欄）
+### `summary.csv` 欄位（36 欄）
 
 ```
-pid, latin_row, manual_order, pilot, round, time, text_type, form, passage_id, passage_title, words,
-limit_s, pilot_mean_s, rtt_group, t_expected_s, rtt,
+pid, latin_row, round, text_type, form, passage_id, passage_title, words, limit_s,
 answers, correct_flags, correct, n_items, n_scored, accuracy, rt_s, end_reason,
-t50_s, t25_s, t10_s,
+first_answer_s, last_answer_s, n_remove, n_add, n_wrong_to_right, n_right_to_wrong,
 nasa_mental, nasa_physical, nasa_temporal, nasa_performance, nasa_effort, nasa_frustration,
-vasa, stai_raw, stai_prorated,
-practice_rt_s, practice_words, sec_per_word,
-est_s, wall_start, wall_end, overflow
+vasa_pos, vasa_moved, practice_rt_s, practice_words, wall_start, wall_end, overflow
 ```
 
 - **閱讀題計分**（正確答案見 `materials.js` 每題的 `ans`，以材料原件「設計總覽」表格為準）：
@@ -159,17 +156,23 @@ est_s, wall_start, wall_end, overflow
   - `correct`：答對題數；`n_items`：題數；`n_scored`：**可計分題數**（無解題不算）。
   - `accuracy` ＝ `correct` ÷ `n_scored`，**只用可計分的題目計算**；無解回合 `n_scored = 0`，`accuracy` 留空。
   - 未作答的可計分題算錯（計入分母）。
-- `t50_s`／`t25_s`／`t10_s`：到達各時間點的回合內秒數（欄名跟著 `design.js` 的 `timeMarks` 走）。
+- **作答過程**（由該回合的閱讀題點選算出，見 `answers.csv` 的 `action`）：
+  - `first_answer_s`／`last_answer_s`：第一次／最後一次點任何選項的回合內秒數；整回合沒點過就留空。
+  - `n_remove`：取消次數＝改答次數；`n_add`：補選次數（`action = add` 的列數）。
+  - `n_wrong_to_right`／`n_right_to_wrong`：該題點擊前後 `correct` 由錯變對／由對變錯的次數。
+    沒有選項時以計分規則視為錯；**每題第一次點選（`first`）不算變化**（點之前還沒作答）；無解題不計入。
 - `wall_start`／`wall_end`：該回合開始／結束的牆上時間（含時區、到毫秒）。
-- `vasa`：該回合後的 VAS-A 分數（0–30）；`stai_raw`／`stai_prorated` 保留欄位，STAI 目前不施測所以留空。
-- **練習列（`round = 0`）**：量表欄位留空；另有 `practice_rt_s`、`practice_words`、`sec_per_word`。
-- `manual_order` 保留在欄位裡但**恆為 0**（順序不再提供手動調整）。
+- `vasa_pos`：該回合後 VAS-A 的定位比例（0–1，小數 4 位，0＝calm、1＝anxious）；`vasa_moved`：受試者有沒有動過滑桿（1／0；目前沒動過不能按 Next，所以恆為 1）。
+  切成 30 等分的整數分數只留在 `questionnaires.csv`／`answers.csv`。
+- **練習列（`round = 0`）**：量表欄位留空；另有 `practice_rt_s`、`practice_words`。
+- 不在 summary、改看其他檔：`manual_order`、`pilot`、`pilotMean_s`、`sec_per_word`、`est_s` 在 `session.json`；
+  時間點事件（`time_50` 等）在 `events.jsonl`（`session.json` 各回合也有 `t50_s` 等）。
 - **眼動欄位已全部移除**（網站不收眼動；眼動在 Gazepoint 那邊）。
 
 ### `answers.csv` 欄位
 
 ```
-pid, context, round, source, item, item_label, option, value, correct, is_change, prev_option, t_ms, wall_time
+pid, context, round, source, item, item_label, option, value, correct, action, prev_option, t_ms, wall_time
 ```
 
 - `context`：`practice`／`round`／`pretest`／`posttest`。
@@ -177,37 +180,52 @@ pid, context, round, source, item, item_label, option, value, correct, is_change
 - **閱讀題每按一次選項按鈕（選取或取消）記一列**：
   - `option`：點完之後的勾選集合（如 `AB`；全部取消時留空）。
   - `value`：這次的動作，`+C`＝勾 C、`-C`＝取消 C。
-  - `prev_option`：點之前的勾選集合；`is_change` ＝ 1 表示點之前已經有勾選（改答或追加）。
+  - `prev_option`：點之前的勾選集合。
+  - `action`：`first`＝該題第一次點選；`add`＝之後的每一次加選（`value` 開頭是 `+`，包含全部取消後再選）；
+    `remove`＝取消某個選項（`value` 開頭是 `-`），**這才算改答**。
   - `correct`：點完之後的集合是否完全等於可證成選項（1／0）；**無解題留空**。
 - VAS-A：**每按下到放開記一列**（點一下或拖曳一次都算一列）；`item_label` ＝ `anxiety`，`option` ＝ 定位比例 `pos`（0–1，小數 4 位），`value` ＝ 0–30 分；`prev_option` 是上一次放開時的 `pos`。
-- 量表：`option`／`value` 是選項文字與計分值，`correct` 留空；`is_change` ＝ 1 表示改答，`prev_option` 是改之前選的。
+- 量表（含 VAS-A）：`option`／`value` 是選項文字與計分值，`correct` 留空；`action` 為 `first`（該題第一次點）／`change`（改選別的）／`repeat`（再點同一個），`prev_option` 是之前選的。
 - `t_ms`：距**該畫面開始**的毫秒數（閱讀題＝回合開始，量表＝該份量表出現）。
 
-### `layout.csv` 欄位
+### `layout.csv` 欄位（版面檢查，每回合一列）
 
 ```
-pid, round, region, x, y, w, h, viewport_w, viewport_h, screen_w, screen_h
+pid, round, passage_id, fullscreen, scale, viewport_w, viewport_h, screen_w, screen_h
 ```
 
-`region` 為 `text`（文本內容的外框：標題頂到最後一段底）／`questions`（題目內容的外框：第 1 題題幹頂到送出列底）／`timer`（上方工具列的計時器，標籤＋數字的外框；練習與前導無此列）。
-`x`／`y` 是**螢幕座標**（左上角為原點），全螢幕時即為眼動儀座標系；`w`／`h` 為該區塊的寬高。
+`fullscreen`：該回合開始時是否全螢幕（1／0）；`scale`：舞台縮放比例（實驗螢幕 1920×1080 全螢幕時為 1）。
+**`fullscreen = 1` 且 `scale = 1` 時，AOI 座標表可直接套在眼動資料上**；否則要先換算。
+
+### AOI 座標表（每篇一份，實驗後給分析程式用）
+
+網址加 `?aoi`（例如 `index.html?aoi`）→ 自動排出練習篇與 6 篇正式文本，量好後下載 `aoi_tables.zip`，
+裡面是 `aoi_practice.csv`、`aoi_type1A.csv`……每篇一份：
+
+```
+passage_id, region, x, y, w, h
+```
+
+- 座標是 **1920×1080 設計座標**（左上角為原點），已扣掉舞台位移並除以縮放比例，與視窗大小、位置無關（已實測 1920×1080 與 1366×768 輸出完全相同）。
+- `region`：
+  - 整欄：`text`（整個文本欄 48, 170, 904×870，含空白處）、`questions`（整個題目欄 1088, 170, 784×870）
+  - 文本：`title`、`para_1`…`para_n`
+  - 題目：`q_k`（第 k 題整題＝題幹頂到最後一個選項底，不含題與題之間的分隔線與留白）、`q_k_stem`（題號＋題幹）、`q_k_opts`（全部選項合成一塊）
+  - 工具列：`timer`（計時器標籤＋數字；練習篇沒有）、`round_label`（左側「Reading Test · Round 1 of 6」；練習篇為「· Practice」）
+  - 送出列：`progress_submit`（已答題數＋送出鈕合成一塊）
+- ⚠️ **請在實驗電腦、實驗用瀏覽器上匯出**：字型不同，換行位置與段落高度就不同。換了文本或排版也要重新匯出。
+- `round_label` 一律以「Round 1 of 6」量；其他回合數字寬度不同，差距在 1～2 像素內。
 
 ### `events.jsonl` 主要事件
 
 `session_start`、`round_start`、`layout`、`trial_start`、`answer`（每一次點選）、
-`time_50`／`time_25`／`time_10`、`submit_confirm_open`、`submit_cancel`、`trial_end`（含 `endReason`＝`submit`／`timeout`）、
+`time_50`／`time_25`／`time_10`、`trial_end`（含 `endReason`＝`submit`／`timeout`）、
 `questionnaire_start`、`q_click`（每一次點選）、`questionnaire`、`questionnaires_done`、
 `next_pressed`、`rest_start`、`rest_end`、`timer_info_start`／`timer_info_done`、
 `fullscreen_enter`／`fullscreen_exit`、`visibility`、`session_end`、`download`。全部附牆上時間到毫秒。
 
-### 時間容忍度（RTT）兩種算法
-
-| 欄位 | 算法 | 用途 |
-|---|---|---|
-| `rtt_group` | （`limit_s` − `pilot_mean_s`）÷ `pilot_mean_s` | **主分析**：群體層級，分母是前導實驗的平均作答時間 |
-| `rtt` | （`limit_s` − `t_expected_s`）÷ `t_expected_s`，其中 `t_expected_s` ＝ 練習回合的 `sec_per_word` × 該篇字數 | **探索分析**：個人層級 |
-
-字數以空白切分段落文字計算（不含標題與試題）。前導模式的回合不限時，因此 `limit_s` 與兩個 RTT 都留空。
+字數以空白切分段落文字計算（不含標題與試題）。前導模式的回合不限時，因此 `limit_s` 留空。
+（時間容忍度 `rtt_group`／`rtt` 與 `t_expected_s` 於 2026-10-12 從 summary 移除；需要時可由 `session.json` 的 `pilotMean_s`、`sec_per_word` 自行計算。）
 
 ---
 
@@ -219,7 +237,7 @@ pid, round, region, x, y, w, h, viewport_w, viewport_h, screen_w, screen_h
 - 文本順序仍依順序表。
 - `session.json` 標記 `pilot: true`，下載檔名加 `PILOT_` 前綴，不會與正式資料混在一起。
 - 想順便收「自估所需時間」：把 `design.js` 的 `pilotEstimate` 改成 `true`，每篇讀前會問一題
-  `This passage has N words. How many seconds do you think you will need…`，答案存成 `est_s`。
+  `This passage has N words. How many seconds do you think you will need…`，答案存成 `est_s`（在 `session.json` 與 `events.jsonl`，不在 summary）。
 
 ### 跑完後算時限
 
@@ -232,7 +250,8 @@ python3 pilot_limits.py 某個資料夾 --median   # 人數少、標準差不穩
 
 輸出每篇的人數、平均、標準差、中位數、最小／最大、極端值（離平均超過 2 個標準差者的編號）、各題答對率、
 建議的寬鬆（平均＋1 SD）與緊迫（平均−1 SD）秒數；若有自估時間，另算自估與實際時間的相關。
-最後印出**可直接貼回 `materials.js` 的片段**。
+⚠️ 這支腳本是寬鬆／緊迫設計時寫的：最後印出的 `limit: { loose, tight }` 片段**已不符合目前的 `limit: 秒數` 格式**，不要直接貼回；
+自估時間 `est_s` 也已不在 summary，相關分析會略過。
 
 ---
 
@@ -305,11 +324,11 @@ python3 pilot_limits.py 某個資料夾 --median   # 人數少、標準差不穩
 | 正式文本 6 篇 | **已放入**（2026-10-08，原件 @Perry「考試閱讀實驗材料」，只放英文文章與題目，每篇 2 題）。對應：1 號→type1A、4 號→type1B、2 號→type2A、5 號→type2B、3 號→type3A、6 號→type3B | — |
 | 文本類型數與名稱 | 3 類＝答案結構：唯一解／多重解／無解；A 篇＝說明文、B 篇＝論辯文 | — |
 | 練習文本 | 仍是示範文本（Why Bread Rises，2 題，`demo: true`） | 視需要 |
-| 各篇寬鬆／緊迫秒數、前導平均 | 暫填寬鬆＝緊迫＝180 秒（3 分鐘）、`pilotMean_s: 120` | 前導實驗 → `pilot_limits.py` |
-| 狀態焦慮：VAS-A | 2026-10-11 起改用電腦化焦慮視覺類比量表（Abend et al., 2014, p.448）：單題 “How anxious do you feel right now?”，水平線（**不照原文 100 公釐**，改與 NASA 量尺同寬 1080 設計像素，整組置於畫面正中；計分是相對位置不受影響）、左 calm 右 anxious、游標起始在中點、不畫刻度不顯示數字；分數＝定位點到左端的相對距離四捨五入成 **0–30**，另存 `pos`（0–1）。本網站追加：至少點選或拖曳一次才能按 Next（記 `moved`、`first_move_ms`）。前測一次、每回合後第一個 | — |
+| 各篇時限、前導平均 | 時限一律 180 秒（3 分鐘）；`pilotMean_s: 120` 是演示用數字 | — |
+| 狀態焦慮：VAS-A | 2026-10-11 起改用電腦化焦慮視覺類比量表（Abend et al., 2014, p.448）：單題 “How anxious do you feel right now?”，水平線（**不照原文 100 公釐**，改用 1080 設計像素，整組置於畫面正中；計分是相對位置不受影響）、左 calm 右 anxious、游標起始在中點、不畫刻度不顯示數字；分數＝定位點到左端的相對距離四捨五入成 **0–30**（存在 `questionnaires.csv`），另存 `pos`（0–1；summary 用這個，欄名 `vasa_pos`）。本網站追加：至少點選或拖曳一次才能按 Next（記 `moved`、`first_move_ms`）。前測一次、每回合後第一個 | — |
 | **螢幕實體寬度 `screenWidthMm`** | `design.js` 預設 531（24 吋 16:9）。只用來把 VAS-A 線長換算成實體公釐記在事件紀錄（預設約 299 公釐），不影響畫面與計分 | **使用者：到現場用尺量實驗螢幕「可視區」寬度（公釐）後填入** |
 | STAI 6 題 | 2026-10-11 起**不施測**（不在任何清單）；`materials.js` 的定義與 `stai-items.local.js` 載入先保留，要加回就把 `'stai'` 放回 `design.js` 的清單 | — |
-| NASA-TLX | 已用 NASA 公開的英語原版定義（6 分量表、21 刻度、0–100、不做兩兩比較加權） | — |
+| NASA-TLX | 已用 NASA 公開的英語原版定義（6 分量表、21 刻度、0–100、不做兩兩比較加權）。2026-10-12 起 6 題排成兩欄、每欄 3 題，一頁放得下不用捲動 | — |
 | 同學量表 | `materials.js` 的 `peer` 插槽有 1 題示範題；預設不在 `roundQuestionnaires` 內，要啟用就把 `'peer'` 加進去 | 同學 |
 | 後測問卷 | `postQuestionnaires: []`（空清單；為空時結束畫面前自動略過） | 使用者 |
 | 拉丁方格順序表 | 預設 6 列 Williams 平衡（可整張換掉，見上） | 使用者 |

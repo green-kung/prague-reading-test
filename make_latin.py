@@ -4,12 +4,12 @@
 用法：python3 make_latin.py 3        # 3 種文本類型 → 2 × 3 ＝ 6 個條件、6 列
       python3 make_latin.py 2 4     # 一次產生 2 類與 4 類兩張表
 
-產生方式（與 design.js 註解相同）：
-  ① 2N 個條件依 (寬鬆, 緊迫) × (類型一, 類型二, …) 編號 0…2N−1；
+產生方式（沿用舊版 2 × N 設計的排法，2026-10-12 起輸出時拿掉時間這一項，文本順序不變）：
+  ① 2N 個格位依 (舊寬鬆, 舊緊迫) × (類型一, 類型二, …) 編號 0…2N−1；
   ② 第 1 列用 Williams 平衡序列（偶數個處理時，一張方格即可平衡一階殘留效果）；
   ③ 第 i 列＝第 1 列每個編號加 i（模 2N）；
-  ④ 篇別：第 i 列的類型 k，(i + k) 為偶數時「寬鬆配 A、緊迫配 B」，否則相反。
-產生後會自行檢查：每列格數＝2N、每種「時間 × 文本類型」各一次、同一類型的 A／B 各一次。
+  ④ 篇別：第 i 列的類型 k，(i + k) 為偶數時「舊寬鬆格配 A、舊緊迫格配 B」，否則相反。
+每格輸出 [文本類型, 篇別]；產生後會自行檢查：每列格數＝2N、同一類型的 A／B 各一次。
 """
 import sys
 
@@ -41,7 +41,7 @@ def make(N):
                 form = 'A' if time == 'loose' else 'B'
             else:
                 form = 'B' if time == 'loose' else 'A'
-            cells.append((time, f'type{k}', form))
+            cells.append((f'type{k}', form))
         rows.append(cells)
     return rows
 
@@ -51,10 +51,8 @@ def check(rows, N):
     for i, row in enumerate(rows, 1):
         if len(row) != 2 * N:
             problems.append(f'第 {i} 列格數 {len(row)} ≠ {2 * N}')
-        if len({(t, ty) for t, ty, _ in row}) != 2 * N:
-            problems.append(f'第 {i} 列有重複的「時間 × 文本類型」')
         for k in range(1, N + 1):
-            forms = sorted(f for _, ty, f in row if ty == f'type{k}')
+            forms = sorted(f for ty, f in row if ty == f'type{k}')
             if forms != ['A', 'B']:
                 problems.append(f'第 {i} 列 type{k} 的篇別為 {forms}，應為 A 與 B 各一次')
     return problems
@@ -72,10 +70,10 @@ def main():
             continue
         rows = make(N)
         problems = check(rows, N)
-        print(f'// ── {N} 類文本 → {2 * N} 個條件、{2 * N} 回合、{len(rows)} 列 ──')
+        print(f'// ── {N} 類文本 × A／B → {2 * N} 回合、{len(rows)} 列 ──')
         print('  latinSquare: [')
         for row in rows:
-            print('    [' + ', '.join("['%s','%s','%s']" % c for c in row) + '],')
+            print('    [' + ', '.join("['%s','%s']" % c for c in row) + '],')
         print('  ],')
         print('// 檢查：' + ('全部通過' if not problems else '；'.join(problems)))
         print()

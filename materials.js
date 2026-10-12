@@ -18,11 +18,10 @@ window.MATERIALS = {
   // key＝passageId。練習文本 key 固定為 design.js 的 practicePassage（預設 'practice'）。
   // 正式文本：key＝`{textType}{form}`，例如 type1A；textType 與 form 兩欄是查表依據。
   //
-  // limit: { loose: 秒, tight: 秒 }  每篇各有兩個秒數（寬鬆、緊迫）
-  //   ⚠️ 目前寬鬆、緊迫都暫填 180 秒（3 分鐘，無時間壓力差），pilotMean_s 120 是**演示用隨意設定的數字**
-  //      （Claude 設定，非文獻或 meeting 依據）。前導實驗後請用 pilot_limits.py
-  //      算出的值覆蓋；未填時設為 null，開始畫面會顯示警告。
-  // pilotMean_s: 前導實驗「不限時」的平均作答秒數 → 群體層級時間容忍度的分母。
+  // limit: 秒  每篇的作答時限（2026-10-08 起全部 180 秒；舊版的寬鬆／緊迫兩種時限已取消）。
+  //   未填（null）時開始畫面會顯示警告，該回合改為不限時。
+  // pilotMean_s: 前導實驗「不限時」的平均作答秒數；只記在 session.json 的 plan 裡，不進 summary。
+  //   ⚠️ 目前的 120 是**演示用隨意設定的數字**（Claude 設定，非文獻或 meeting 依據）。
   // demo: true 表示示範文本（目前只有練習文本）。
   // 每題：{ stem, opts: [4 個選項], ans }，選項索引 0＝A
   //   ans 為陣列＝可證成選項：[1] 唯一解（只勾 B 才對）；[0, 1] 多重解（A、B 都勾且不多勾才對）；
@@ -48,7 +47,7 @@ window.MATERIALS = {
     // ── 唯一解 ─────────────────────────────────────────────────────────────
     type1A: {   // 原件第 1 號（說明文）
       id: 'type1A', textType: 'type1', form: 'A', title: "Circadian Rhythm",
-      limit: { loose: 180, tight: 180 }, pilotMean_s: 120,   // 2026-10-08 暫時全部統一 180 秒（3 分鐘）
+      limit: 180, pilotMean_s: 120,   // 2026-10-08 起全部統一 180 秒（3 分鐘）
       paras: [
         "A circadian rhythm is a physiological cycle of roughly twenty-four hours inside a living organism. It includes sleep and wakefulness, the rise and fall of body temperature, and the release of hormones. This rhythm is not simply produced by the outside cycle of day and night. Even when people are placed in an environment with no time cues, the rhythm keeps running, although its cycle gradually drifts away from the actual clock.",
         "In humans, the rhythm is coordinated by the suprachiasmatic nucleus in the hypothalamus. When the retina receives light, it sends signals to the suprachiasmatic nucleus, which synchronizes the body clock with the outside day and night. Light is therefore regarded as the most important time cue. In the evening, as light fades, the pineal gland begins to release melatonin, body temperature falls, and the body gradually enters a state suited to sleep. After exposure to light in the early morning, melatonin release is suppressed and the person wakes up.",
@@ -66,7 +65,7 @@ window.MATERIALS = {
 
     type1B: {   // 原件第 4 號（論辯文）
       id: 'type1B', textType: 'type1', form: 'B', title: "Remote Work",
-      limit: { loose: 180, tight: 180 }, pilotMean_s: 120,   // 2026-10-08 暫時全部統一 180 秒（3 分鐘）
+      limit: 180, pilotMean_s: 120,   // 2026-10-08 起全部統一 180 秒（3 分鐘）
       paras: [
         "Whether remote work should become the norm for companies has been widely debated in recent years.",
         "Supporters argue that remote work should become the norm. First, employees save commuting time and can arrange work and life more flexibly. Second, an experiment with customer service staff at a travel company found that those who worked from home performed better and were less likely to quit. On this basis, supporters claim that remote work benefits both employees and companies.",
@@ -87,7 +86,7 @@ window.MATERIALS = {
     // ── 多重解 ─────────────────────────────────────────────────────────────
     type2A: {   // 原件第 2 號（說明文）
       id: 'type2A', textType: 'type2', form: 'A', title: "Urban Heat Island",
-      limit: { loose: 180, tight: 180 }, pilotMean_s: 120,   // 2026-10-08 暫時全部統一 180 秒（3 分鐘）
+      limit: 180, pilotMean_s: 120,   // 2026-10-08 起全部統一 180 秒（3 分鐘）
       paras: [
         "The urban heat island effect is the phenomenon in which temperatures in a city are clearly higher than in the surrounding countryside. The difference is usually most noticeable at night, because the heat a city stores during the day is released only slowly after dark.",
         "The effect is related to the surface materials and spatial structure of cities. Asphalt and concrete absorb and store large amounts of solar radiation during the day and release that heat into the air after nightfall. In contrast, vegetation in the countryside carries heat away through evapotranspiration, and the evaporation of water in the soil also has a cooling effect. Cities have little vegetation, so this natural cooling is weakened. In addition, densely packed tall buildings block the flow of air, which makes it harder for heat to escape, while waste heat from air conditioners, vehicles and factories raises temperatures further.",
@@ -105,7 +104,7 @@ window.MATERIALS = {
 
     type2B: {   // 原件第 5 號（論辯文）
       id: 'type2B', textType: 'type2', form: 'B', title: "School Phone Bans",
-      limit: { loose: 180, tight: 180 }, pilotMean_s: 120,   // 2026-10-08 暫時全部統一 180 秒（3 分鐘）
+      limit: 180, pilotMean_s: 120,   // 2026-10-08 起全部統一 180 秒（3 分鐘）
       paras: [
         "Whether schools should completely ban students from using mobile phones at school is an education issue under discussion in many countries.",
         "Those in favour of a ban argue that phones are the main source of distraction in class. Even when a phone is not picked up, message notifications interrupt students' attention. A study in England found that after schools banned phones, students' exam results improved, and students who had previously had lower results improved the most. Those in favour also point out that without phones at break time, students have more chances to spend time with each other face to face.",
@@ -126,7 +125,7 @@ window.MATERIALS = {
     // ── 無解 ─────────────────────────────────────────────────────────────
     type3A: {   // 原件第 3 號（說明文）
       id: 'type3A', textType: 'type3', form: 'A', title: "Coral Bleaching",
-      limit: { loose: 180, tight: 180 }, pilotMean_s: 120,   // 2026-10-08 暫時全部統一 180 秒（3 分鐘）
+      limit: 180, pilotMean_s: 120,   // 2026-10-08 起全部統一 180 秒（3 分鐘）
       paras: [
         "Corals look like rocks or plants, but they are in fact colonies made up of many tiny animals called polyps. Inside the tissue of reef-building corals live single-celled algae called zooxanthellae. The two have a mutually beneficial relationship: the zooxanthellae carry out photosynthesis and pass the nutrients they produce to the coral, while the coral gives the zooxanthellae a place to live and the carbon dioxide they need for photosynthesis. Most of a coral's colour also comes from these algae.",
         "When seawater stays too warm for a long time, photosynthesis in the zooxanthellae goes wrong and produces substances that harm the coral's tissue, so the coral expels the zooxanthellae from its body. Without the algae, the coral's tissue becomes transparent and the white calcium carbonate skeleton beneath it shows through. This is coral bleaching. Besides high temperature, strong sunlight and water pollution may also trigger bleaching.",
@@ -144,7 +143,7 @@ window.MATERIALS = {
 
     type3B: {   // 原件第 6 號（論辯文）
       id: 'type3B', textType: 'type3', form: 'B', title: "Congestion Charge",
-      limit: { loose: 180, tight: 180 }, pilotMean_s: 120,   // 2026-10-08 暫時全部統一 180 秒（3 分鐘）
+      limit: 180, pilotMean_s: 120,   // 2026-10-08 起全部統一 180 秒（3 分鐘）
       paras: [
         "To improve traffic in city centres, some cities charge a congestion fee on vehicles that enter the centre during peak hours. Opinions differ on whether this policy is worth adopting.",
         "Supporters argue that road space is limited and that a charge encourages drivers to switch to public transport or to travel at a different time. After London and Stockholm introduced a charge, the number of vehicles entering the city centre fell clearly in both cities. Supporters also point out that the revenue can be used to improve buses and metro services, so that people who do not drive benefit as well.",
@@ -171,7 +170,7 @@ window.MATERIALS = {
     // Abend, Dan, Maoz, Raz, & Bar-Haim, 2014, J. Behav. Ther. Exp. Psychiatry, 45, 447–453, p.448 與 Fig. 1)
     // 原文：100 公釐水平線、分 30 等分；左端 calm、右端 anxious；游標起始在中點；
     // 分數＝定位點到左端的相對距離四捨五入成 0–30 整數，受試者看不到數值。
-    // 本網站：線長不照原文 100 公釐，改與 NASA 量尺同寬 1080 設計像素（2026-10-11 使用者決定：100 公釐在畫面上太小、
+    // 本網站：線長不照原文 100 公釐，改用 1080 設計像素（2026-10-11 使用者決定：100 公釐在畫面上太小、
     // 與其他畫面比例不協調）；計分是相對位置，不受線長影響。實體長度依 design.js 的 screenWidthMm 換算後記在事件紀錄。
     // 不畫刻度、不顯示數字；
     // 另存原始比例 pos（0–1，小數 4 位）。追加（原文沒有）：至少點選或拖曳一次才能按 Next。
