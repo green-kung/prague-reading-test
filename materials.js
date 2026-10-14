@@ -12,7 +12,7 @@ window.MATERIALS = {
 
   // ── 文本類型名稱（開始畫面的順序表顯示用；日後改名只改這裡）──────────────────
   // 文本類型＝答案結構；A 篇＝說明文、B 篇＝論辯文
-  textTypeLabels: { type1: '唯一解', type2: '多重解', type3: '無解' },
+  textTypeLabels: { type1: 'Single answer', type2: 'Multiple answers', type3: 'No answer' },
 
   // ── 文本 ────────────────────────────────────────────────────────────────────
   // key＝passageId。練習文本 key 固定為 design.js 的 practicePassage（預設 'practice'）。
