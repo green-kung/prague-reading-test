@@ -284,11 +284,12 @@
   <div id="probe"></div>
 </div>
 
-<script src="materials.js"></script>
+<!-- ?v＝版本號：每次推上正式站都要改，否則瀏覽器可能沿用快取的舊 js（GitHub Pages 快取 10 分鐘） -->
+<script src="materials.js?v=20261014b"></script>
 <script src="stai-items.local.js" onerror="this.remove()"></script>  <!-- 本機專用 STAI 題目；GitHub 上沒有此檔，會維持佔位字 -->
-<script src="design.js"></script>
-<script src="store.js"></script>
-<script src="session.js"></script>
+<script src="design.js?v=20261014b"></script>
+<script src="store.js?v=20261014b"></script>
+<script src="session.js?v=20261014b"></script>
 <script>
 const M = window.MATERIALS, SC = window.SCORING, D = window.DESIGN;
 const params = new URLSearchParams(location.search);
