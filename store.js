@@ -98,7 +98,7 @@ window.Store = (() => {
 
   // ── 由場次資料產生各個檔案 ──────────────────────────────────────────────────
   // D = { session, rounds, events, answers, layouts, qRows }
-  // summary.csv：一列＝一個回合（含練習 round 0）。manual_order、pilot、時間點事件等只在 session.json／events.jsonl
+  // summary.csv：一列＝一個回合（含練習 round 0）。manual_order、時間點事件等只在 session.json／events.jsonl
   function summaryColumns() {
     return ['pid', 'latin_row', 'round', 'text_type', 'form', 'passage_id', 'passage_title', 'words', 'limit_s',
       'answers', 'correct_flags', 'correct', 'n_items', 'n_scored', 'accuracy', 'rt_s', 'end_reason',
@@ -163,7 +163,7 @@ window.Store = (() => {
 
   const folderName = d => {
     const s = d.session || {};
-    return `${s.pilot ? 'PILOT_' : ''}P${String(s.pid).padStart(2, '0')}_${s.created}`;
+    return `P${String(s.pid).padStart(2, '0')}_${s.created}`;
   };
 
   function downloadSession(d) {
@@ -201,7 +201,7 @@ window.Store = (() => {
         const rounds = d.rounds || {};
         const total = ((d.session || {}).plan || []).length;
         return { key: k, name: k.slice(PREFIX.length), pid: (d.session || {}).pid,
-          pilot: !!(d.session || {}).pilot, savedAt: d.savedAt,
+          savedAt: d.savedAt,
           done: Object.keys(rounds).filter(r => +r !== 0 && rounds[r].status === 'done').length, total,
           bytes: (localStorage.getItem(k) || '').length };
       } catch (e) { return { key: k, name: k.slice(PREFIX.length), broken: true }; }

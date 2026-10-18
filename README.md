@@ -3,7 +3,7 @@
 母計畫 AI-READ 在布拉格捷克理工大學執行的考試閱讀實驗系統。
 設計依據與開發規格放在研究者的 Obsidian 筆記庫（不隨本倉庫公開）。
 
-**設計**：N（文本類型）× A／B 兩篇的受試者內設計，共 2N 回合；每回合時限一律 180 秒（2026-10-08 起取消寬鬆／緊迫兩種時限）。
+**設計**：N（文本類型）× A／B 兩篇的受試者內設計，共 2N 回合；每回合時限一律 120 秒（2026-10-08 起取消寬鬆／緊迫兩種時限；2026-10-18 起由 180 秒改為 120 秒）。
 目前設定檔為 **3 類文本、6 回合**，但程式一律**由設定檔推導**回合數與條件，**沒有寫死 6 或 3**；
 改成 2 類或 4 類只要改設定檔（已實測 2 類 4 回合可正常跑完）。
 
@@ -37,8 +37,7 @@ Gazepoint GP3 在**同一台電腦**上由 Gazepoint 自己的軟體校正與錄
 1. 先在 Gazepoint 的軟體完成校正並開始錄製。
 2. 打開 `index.html`（連點兩下，或用 GitHub Pages 網址）。
 3. 在 **Participant ID** 輸入受試者編號 → 下方自動帶出該編號的回合順序（**只顯示，不提供調整**；要換順序請改 `design.js` 的順序表）。
-4. 要跑前導實驗就勾選「**Pilot mode**」。
-5. 按 **Start** → 進入全螢幕 → 把位置讓給受試者。
+4. 按 **Start** → 進入全螢幕 → 把位置讓給受試者。
 
 順序表有格式錯誤時，開始畫面會列出是第幾列、哪裡不對，**Start 會停用**、按了也不會開始。
 
@@ -69,8 +68,8 @@ Gazepoint GP3 在**同一台電腦**上由 Gazepoint 自己的軟體校正與錄
 
 | 檔案 | 放什麼 | 什麼時候改 |
 |---|---|---|
-| `materials.js` | **材料層**：文本、試題、每篇的時限與前導平均秒數、量表題目與計分 | 文本定稿、前導實驗算出時限 |
-| `design.js` | **設計層**：拉丁方格順序表、時間點事件比例、量表清單、螢幕實體寬度、練習設定、休息點、前導選項 | 重新規劃順序、改休息點、要加同學量表或後測問卷、**到現場填螢幕寬度** |
+| `materials.js` | **材料層**：文本、試題、每篇的時限、量表題目與計分 | 文本定稿、改時限 |
+| `design.js` | **設計層**：拉丁方格順序表、時間點事件比例、量表清單、螢幕實體寬度、練習設定、休息點 | 重新規劃順序、改休息點、要加同學量表或後測問卷、**到現場填螢幕寬度** |
 
 改完存檔，**重新整理網頁即生效**，程式不用動。
 
@@ -99,12 +98,10 @@ python3 make_latin.py 4     # 印出 4 類文本的 8 列順序表（每格 [文
 ### 時限怎麼填（`materials.js` 每篇的 `limit`）
 
 ```js
-type1A: { …, limit: 180, pilotMean_s: 120 }
+type1A: { …, limit: 120 }
 ```
 
-- `limit`：該篇的作答秒數（目前六篇都是 180）。
-- `pilotMean_s`：前導實驗「不限時」的平均作答秒數；只記在 `session.json` 的 `plan`，不進 `summary.csv`。
-  ⚠️ 目前的 120 是演示用隨意設定的數字（非文獻或 meeting 依據）。
+- `limit`：該篇的作答秒數（目前六篇都是 120）。
 - 填 `null` 時開始畫面會顯示警告；該篇若真的沒有秒數就會以不限時進行，並在事件紀錄留一筆警告。
 
 ---
@@ -116,12 +113,12 @@ type1A: { …, limit: 180, pilotMean_s: 120 }
 | 時機 | 做什麼 |
 |---|---|
 | 按 Start、**每完成一回合**、每份量表 | 把整個場次存進**瀏覽器本機儲存**（備援；重新整理、分頁誤關都不會遺失） |
-| **場次結束** | **自動下載單一 zip** 到這台電腦的「下載」資料夾，檔名 `P編號_日期-時間.zip`（前導為 `PILOT_P…`） |
+| **場次結束** | **自動下載單一 zip** 到這台電腦的「下載」資料夾，檔名 `P編號_日期-時間.zip` |
 | 下載失敗時 | 結束畫面**右下角**有一個不顯眼的「**Download data again**」按鈕，按了會重下載同一個檔 |
 
 - **只下載一個檔**（zip），避免瀏覽器跳出「允許下載多個檔案」的提示。
 - zip 由 `store.js` **自己產生**（store 模式、不壓縮），**不依賴 JSZip 或任何 CDN**——離線、GitHub Pages 都能用。
-- 開始畫面會顯示「N sessions stored in this browser」。暫存最多保留 30 個場次，超過會自動刪最舊的。
+- 瀏覽器暫存最多保留 30 個場次，超過會自動刪最舊的。
   **每天結束前請確認 zip 都已存到硬碟並備份。**
 
 ### zip 裡的六個檔案
@@ -165,7 +162,7 @@ vasa_pos, vasa_moved, practice_rt_s, practice_words, wall_start, wall_end, overf
 - `vasa_pos`：該回合後 VAS-A 的定位比例（0–1，小數 4 位，0＝calm、1＝anxious）；`vasa_moved`：受試者有沒有動過滑桿（1／0；目前沒動過不能按 Next，所以恆為 1）。
   切成 30 等分的整數分數只留在 `questionnaires.csv`／`answers.csv`。
 - **練習列（`round = 0`）**：量表欄位留空；另有 `practice_rt_s`、`practice_words`。
-- 不在 summary、改看其他檔：`manual_order`、`pilot`、`pilotMean_s`、`sec_per_word`、`est_s` 在 `session.json`；
+- 不在 summary、改看其他檔：`manual_order`、`sec_per_word` 在 `session.json`；
   時間點事件（`time_50` 等）在 `events.jsonl`（`session.json` 各回合也有 `t50_s` 等）。
 - **眼動欄位已全部移除**（網站不收眼動；眼動在 Gazepoint 那邊）。
 
@@ -224,34 +221,8 @@ passage_id, region, x, y, w, h
 `next_pressed`、`rest_start`、`rest_end`、`timer_info_start`／`timer_info_done`、
 `fullscreen_enter`／`fullscreen_exit`、`visibility`、`session_end`、`download`。全部附牆上時間到毫秒。
 
-字數以空白切分段落文字計算（不含標題與試題）。前導模式的回合不限時，因此 `limit_s` 留空。
-（時間容忍度 `rtt_group`／`rtt` 與 `t_expected_s` 於 2026-10-12 從 summary 移除；需要時可由 `session.json` 的 `pilotMean_s`、`sec_per_word` 自行計算。）
-
----
-
-## 前導模式（布拉格第 1 天）
-
-開始畫面勾選「**Pilot mode**」：
-
-- 全部回合不限時、不顯示計時器、不出現回合後量表、不做練習後的計時器說明。
-- 文本順序仍依順序表。
-- `session.json` 標記 `pilot: true`，下載檔名加 `PILOT_` 前綴，不會與正式資料混在一起。
-- 想順便收「自估所需時間」：把 `design.js` 的 `pilotEstimate` 改成 `true`，每篇讀前會問一題
-  `This passage has N words. How many seconds do you think you will need…`，答案存成 `est_s`（在 `session.json` 與 `events.jsonl`，不在 summary）。
-
-### 跑完後算時限
-
-把全部前導的 zip（**不用解壓**）放進同一個資料夾，然後：
-
-```bash
-python3 pilot_limits.py ~/Downloads          # 直接掃「下載」資料夾
-python3 pilot_limits.py 某個資料夾 --median   # 人數少、標準差不穩時改用中位數
-```
-
-輸出每篇的人數、平均、標準差、中位數、最小／最大、極端值（離平均超過 2 個標準差者的編號）、各題答對率、
-建議的寬鬆（平均＋1 SD）與緊迫（平均−1 SD）秒數；若有自估時間，另算自估與實際時間的相關。
-⚠️ 這支腳本是寬鬆／緊迫設計時寫的：最後印出的 `limit: { loose, tight }` 片段**已不符合目前的 `limit: 秒數` 格式**，不要直接貼回；
-自估時間 `est_s` 也已不在 summary，相關分析會略過。
+字數以空白切分段落文字計算（不含標題與試題）。練習回合不限時，因此 `round = 0` 的 `limit_s` 留空。
+（時間容忍度 `rtt_group`／`rtt` 與 `t_expected_s` 於 2026-10-12 從 summary 移除；前導模式與 `pilotMean_s` 於 2026-10-18 移除：所有受試者都是練習題不計時、正式 6 回合各 120 秒。）
 
 ---
 
@@ -297,9 +268,8 @@ python3 pilot_limits.py 某個資料夾 --median   # 人數少、標準差不穩
 | `materials.js` | 材料層設定（文本、試題、量表） |
 | `design.js` | 設計層設定（順序表、時間點、量表清單、休息點） |
 | `make_latin.py` | 產生 Williams 平衡順序表（只在要改文本類型數時用） |
-| `pilot_limits.py` | 由前導資料算建議時限（只在前導後用） |
 
-兩個 Python 腳本是**離線工具**，施測本身完全不需要 Python。
+`make_latin.py` 是**離線工具**，施測本身完全不需要 Python。
 
 ---
 
@@ -324,7 +294,7 @@ python3 pilot_limits.py 某個資料夾 --median   # 人數少、標準差不穩
 | 正式文本 6 篇 | **已放入**（2026-10-08，原件 @Perry「考試閱讀實驗材料」，只放英文文章與題目，每篇 2 題）。對應：1 號→type1A、4 號→type1B、2 號→type2A、5 號→type2B、3 號→type3A、6 號→type3B | — |
 | 文本類型數與名稱 | 3 類＝答案結構：唯一解／多重解／無解（開始畫面顯示為 Single answer／Multiple answers／No answer，名稱在 `materials.js` 的 `textTypeLabels`）；A 篇＝說明文、B 篇＝論辯文 | — |
 | 練習文本 | 仍是示範文本（Why Bread Rises，2 題，`demo: true`） | 視需要 |
-| 各篇時限、前導平均 | 時限一律 180 秒（3 分鐘）；`pilotMean_s: 120` 是演示用數字 | — |
+| 各篇時限 | 時限一律 120 秒（2 分鐘）；練習題不限時 | — |
 | 狀態焦慮：VAS-A | 2026-10-11 起改用電腦化焦慮視覺類比量表（Abend et al., 2014, p.448）：單題 “How anxious do you feel right now?”，水平線（**不照原文 100 公釐**，改用 1080 設計像素，整組置於畫面正中；計分是相對位置不受影響）、左 calm 右 anxious、游標起始在中點、不畫刻度不顯示數字；分數＝定位點到左端的相對距離四捨五入成 **0–30**（存在 `questionnaires.csv`），另存 `pos`（0–1；summary 用這個，欄名 `vasa_pos`）。本網站追加：至少點選或拖曳一次才能按 Next（記 `moved`、`first_move_ms`）。前測一次、每回合後第一個 | — |
 | **螢幕實體寬度 `screenWidthMm`** | `design.js` 預設 531（24 吋 16:9）。只用來把 VAS-A 線長換算成實體公釐記在事件紀錄（預設約 299 公釐），不影響畫面與計分 | **使用者：到現場用尺量實驗螢幕「可視區」寬度（公釐）後填入** |
 | STAI 6 題 | 2026-10-11 起**不施測**（不在任何清單）；`materials.js` 的定義與 `stai-items.local.js` 載入先保留，要加回就把 `'stai'` 放回 `design.js` 的清單 | — |

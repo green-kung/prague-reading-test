@@ -8,7 +8,7 @@
   /* 這個網站只有一頁（受試者畫面）：沒有研究者儀表板、沒有伺服器、不連眼動儀。
      固定 1920×1080 版面；各區域的 AOI 座標由 ?aoi 每篇匯出一份固定表（設計座標），layout.csv 只記每回合的全螢幕與縮放。
      配色規則：不用紅、黃等警示色；強調色（青）與計時器色（深藍灰）刻意不同，避免搶走計時器的注意力；
-     計時器樣式在全部回合完全相同（時限一律 180 秒），回合間只差文本。
+     計時器樣式在全部回合完全相同（時限一律 120 秒），回合間只差文本。
      ★ 語言：全部畫面一律英語（開始畫面 2026-10-14 起也改英語）。 */
   :root {
     --ink: #1f2933;        /* 文本與題目字色 */
@@ -107,15 +107,6 @@
   #info-text { position: absolute; left: 360px; top: 300px; width: 1200px; text-align: center;
     font-size: 30px; line-height: 1.7; }
   #info-text .sub { font-size: 21px; color: var(--muted); margin-top: 18px; line-height: 1.6; }
-
-  /* ── 前導模式的自估時間題 ── */
-  #est-card { position: absolute; left: 410px; top: 230px; width: 1100px; padding: 56px 64px; }
-  #est-card h2 { font-size: 30px; font-weight: 600; line-height: 1.5; margin-bottom: 14px; }
-  #est-card p { font-size: 21px; color: var(--muted); line-height: 1.6; margin-bottom: 30px; }
-  #est-row { display: flex; align-items: center; gap: 16px; }
-  #est-input { font-size: 30px; padding: 10px 18px; width: 220px; border: 1px solid var(--line); border-radius: 10px;
-    background: var(--soft); font-family: "SF Mono", Menlo, Consolas, monospace; }
-  #est-unit { font-size: 22px; color: var(--muted); margin-right: auto; }
 
   /* ── 量表 ── */
   #q-card { position: absolute; left: 40px; top: 20px; width: 1840px; height: 976px; display: flex; flex-direction: column; }
@@ -220,18 +211,6 @@
     </div>
   </section>
 
-  <section class="scr" id="scr-est">
-    <div id="est-card" class="card">
-      <h2 id="est-q"></h2>
-      <p>Give your best estimate. There is no right or wrong answer.</p>
-      <div id="est-row">
-        <input id="est-input" type="number" min="1" max="3600" step="1" inputmode="numeric">
-        <span id="est-unit">seconds</span>
-        <button class="btn primary" id="est-next">Continue</button>
-      </div>
-    </div>
-  </section>
-
   <section class="scr" id="scr-trial">
     <div id="col-divider"></div>
     <section id="text-area"></section>
@@ -266,30 +245,27 @@
 <!-- ══ 開始畫面（研究者操作，英語）══ -->
 <div id="setup">
   <div class="box">
-    <h1>Prague Reading Test · Setup</h1>
+    <h1>Reading Test · Setup</h1>
     <div class="lead">Press Start to enter full screen and hand over to the participant. Data are downloaded automatically as one zip file at the end.</div>
     <div class="row1">
       <label class="f" for="f-pid">Participant ID</label>
       <input id="f-pid" type="number" min="1" value="1">
-      <label class="chk"><input type="checkbox" id="f-pilot">Pilot mode (untimed, no questionnaires, file name prefixed PILOT_)</label>
-      <span class="f" id="design-info" style="margin-left:auto"></span>
     </div>
     <div id="order-box"></div>
     <div class="note" id="order-note"></div>
     <div class="msg err" id="m-err"></div>
     <div class="msg warn" id="m-warn"></div>
-    <div class="msg ok" id="m-ok"></div>
     <button id="start-btn">Start</button>
   </div>
   <div id="probe"></div>
 </div>
 
 <!-- ?v＝版本號：每次推上正式站都要改，否則瀏覽器可能沿用快取的舊 js（GitHub Pages 快取 10 分鐘） -->
-<script src="materials.js?v=20261014b"></script>
+<script src="materials.js?v=20261018"></script>
 <script src="stai-items.local.js" onerror="this.remove()"></script>  <!-- 本機專用 STAI 題目；GitHub 上沒有此檔，會維持佔位字 -->
-<script src="design.js?v=20261014b"></script>
-<script src="store.js?v=20261014b"></script>
-<script src="session.js?v=20261014b"></script>
+<script src="design.js?v=20261018"></script>
+<script src="store.js?v=20261018"></script>
+<script src="session.js?v=20261018"></script>
 <script>
 const M = window.MATERIALS, SC = window.SCORING, D = window.DESIGN;
 const params = new URLSearchParams(location.search);
@@ -374,8 +350,7 @@ function expandOrder(pid) {
   const plan = D.latinSquare[rowIdx].map(([textType, form], i) => {
     const p = CFG.byKey[`${textType}${form}`];
     return { round: i + 1, textType, form, passageId: p.id || `${textType}${form}`,
-      passageTitle: p.title, words: wordsOf(p), limit_s: limitFor(p),
-      pilotMean_s: p.pilotMean_s == null ? null : p.pilotMean_s };
+      passageTitle: p.title, words: wordsOf(p), limit_s: limitFor(p) };
   });
   return { latinRow: rowIdx + 1, plan };
 }
@@ -395,9 +370,7 @@ function precheckPassages() {
 // ── 開始畫面 ──
 let draft = null;
 function renderSetup() {
-  $('design-info').textContent = CFG.ok ? `${CFG.N} text types · ${2 * CFG.N} rounds · ${CFG.rows} order rows` : 'Configuration error';
   $('m-err').textContent = CFG.ok ? '' : 'Configuration error — cannot start:\n• ' + CFG.errors.join('\n• ');
-  const pilot = $('f-pilot').checked;
   const pid = +$('f-pid').value || 1;
   const r = expandOrder(pid);
   draft = r;
@@ -406,25 +379,20 @@ function renderSetup() {
   r.plan.forEach((p, i) => {
     h += `<tr><td class="mono">${i + 1}</td><td>${typeLabel(p.textType)} (${p.form})</td>
       <td title="${p.passageTitle}">${p.passageTitle}</td>
-      <td class="mono">${pilot ? 'Untimed' : (p.limit_s == null ? '⚠ Not set' : p.limit_s + ' s')}</td></tr>`;
+      <td class="mono">${p.limit_s == null ? '⚠ Not set' : p.limit_s + ' s'}</td></tr>`;
   });
   h += '</table>';
   $('order-box').innerHTML = h;
   const rest = (D.restAfterRounds || []).filter(x => x < r.plan.length);
   $('order-note').textContent = `ID ${pid} → order row ${r.latinRow} (the order comes from the configuration and cannot be changed here; edit latinSquare in design.js to change it)`
     + (rest.length ? ` | Breaks: after round ${rest.join(', ')} (researcher presses Shift + Enter to continue)` : '');
-  const warn = CFG.warnings.filter(w => !pilot || !w.includes('time limit not set'));
+  const warn = CFG.warnings.slice();
   const over = precheckPassages();
   if (over.length) warn.unshift(`These passages overflow the text area and will be cut off: ${over.join(', ')} (shorten them, or adjust font size / line height in index.html)`);
   $('m-warn').textContent = warn.length ? '⚠ ' + warn.join('\n⚠ ') : '';
-  const stored = Store.list();
-  $('m-ok').textContent = stored.length
-    ? `${stored.length} session${stored.length > 1 ? 's' : ''} stored in this browser (latest: ${stored[0].name}). Data stay on this computer and are never uploaded.`
-    : '';
   $('start-btn').disabled = !CFG.ok;
 }
 $('f-pid').oninput = renderSetup;
-$('f-pilot').onchange = renderSetup;
 
 // ══════════════════════════════════════════════════════════════════════════════
 // 受試者流程（按 Start 之後全部英語）
@@ -447,17 +415,17 @@ let current = null;        // 進行中的回合（可中止計時器）
 let stages = [], si = 0;   // 流程清單與目前位置
 
 function buildStages() {
-  const total = Session.total, pilot = Session.isPilot();
+  const total = Session.total;
   const out = [];
   if ((D.preQuestionnaires || []).length) out.push({ type: 'questionnaires', context: 'pretest', list: D.preQuestionnaires });
   out.push({ type: 'next', round: 0, practice: true });
   out.push({ type: 'trial', round: 0 });
-  if (!pilot) out.push({ type: 'timerinfo' });
+  out.push({ type: 'timerinfo' });
   const rest = D.restAfterRounds || [];
   for (let r = 1; r <= total; r++) {
     out.push({ type: 'next', round: r });
     out.push({ type: 'trial', round: r });
-    if (!pilot && (D.roundQuestionnaires || []).length) {
+    if ((D.roundQuestionnaires || []).length) {
       out.push({ type: 'questionnaires', context: 'round', round: r, list: D.roundQuestionnaires });
     }
     if (rest.includes(r) && r < total) out.push({ type: 'rest', after: r });
@@ -582,31 +550,12 @@ function updateProgress(p) {
 }
 const paint = ms => { $('timer-num').textContent = fmt(Math.max(0, Math.ceil(ms / 1000))); };
 
-// 前導模式可選題：讀前自估所需秒數
-function askEstimate(cfg, then) {
-  const p = passageFor(cfg.passageId), words = M.words(p);
-  showScreen('scr-est');
-  $('est-q').textContent = `This passage has ${words} words. How many seconds do you think you will need to read it and answer the questions?`;
-  $('est-input').value = '';
-  setRound(cfg.round, Session.total);
-  setTimeout(() => $('est-input').focus(), 50);
-  const go = () => {
-    const v = parseInt($('est-input').value, 10);
-    if (!(v > 0)) { $('est-input').focus(); return; }
-    Session.estimate(cfg.round, { passageId: cfg.passageId, words, est_s: v });
-    then();
-  };
-  $('est-next').onclick = go;
-  $('est-input').onkeydown = e => { if (e.key === 'Enter') go(); };
-}
-
 function runTrial(r) {
   if (current) current.stop();
   const plan = r === 0 ? null : Session.plan[r - 1];
-  const pilot = Session.isPilot();
   const cfg = r === 0
     ? { round: 0, passageId: (Session.state.session.practice || {}).passageId, textType: null, form: null, timed: false }
-    : { round: r, passageId: plan.passageId, textType: plan.textType, form: plan.form, timed: !pilot };
+    : { round: r, passageId: plan.passageId, textType: plan.textType, form: plan.form, timed: true };
   const p0 = passageFor(cfg.passageId);
   cfg.limit_s = cfg.timed ? limitFor(p0) : null;
   if (cfg.timed && cfg.limit_s == null) {   // 設定檔尚未填入秒數：改為不限時，避免整個回合卡住
@@ -614,7 +563,6 @@ function runTrial(r) {
     Session.log({ type: 'warning', round: r, text: `passage ${cfg.passageId} has no limit; round runs untimed` });
   }
   Session.startRound(r, cfg);
-  const askEst = pilot && !!D.pilotEstimate;
   const begin = () => {
     showScreen('scr-trial');
     const p = render(cfg);
@@ -687,7 +635,7 @@ function runTrial(r) {
     }
     current = { stop: () => { done = true; cancelAnimationFrame(raf); clearInterval(guard); } };
   };
-  if (askEst) askEstimate(cfg, begin); else begin();
+  begin();
 }
 
 // ── 計時器說明畫面（練習之後約 10 秒，示範數字倒數）──
@@ -859,7 +807,7 @@ if (params.has('aoi')) {
   document.fonts.ready.then(() => {
     ids.forEach(id => {
       const p = M.passages[id], practice = id === D.practicePassage;
-      const cfg = { round: practice ? 0 : 1, passageId: id, timed: !practice, limit_s: limitFor(p) || 180 };
+      const cfg = { round: practice ? 0 : 1, passageId: id, timed: !practice, limit_s: limitFor(p) || 120 };
       showScreen('scr-trial');
       render(cfg);
       setRound(cfg.round, total);    // 正式文本一律以「Round 1 of N」量 round_label（各回合數字寬度差不到 1 像素）
@@ -882,7 +830,7 @@ if (params.has('aoi')) {
   $('setup').classList.add('off');
   const pid = params.get('passage') || 'type1A';
   const cfg = { round: 1, passageId: pid, timed: true };
-  cfg.limit_s = +(params.get('limit') || limitFor(passageFor(pid)) || 180);
+  cfg.limit_s = +(params.get('limit') || limitFor(passageFor(pid)) || 120);
   showScreen('scr-trial');
   const p = render(cfg);
   paint(+params.get('freeze') * 1000);
@@ -904,7 +852,7 @@ if (params.has('aoi')) {
     fit();
     const practice = CFG.practice;
     Session.create({
-      pid: +$('f-pid').value || 1, pilot: $('f-pilot').checked,
+      pid: +$('f-pid').value || 1,
       latinRow: draft.latinRow, plan: draft.plan,
       practice: { passageId: practice.id || D.practicePassage, title: practice.title, words: wordsOf(practice) },
       design: D,

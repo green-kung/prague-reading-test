@@ -45,14 +45,13 @@ window.Session = (() => {
     data, log, persist, download,
     get plan() { return (S.session || {}).plan || []; },
     get total() { return ((S.session || {}).plan || []).length; },
-    isPilot: () => !!(S.session || {}).pilot,
 
     // ── 建立場次 ──────────────────────────────────────────────────────────────
-    create({ pid, pilot, latinRow, plan, practice, design }) {
+    create({ pid, latinRow, plan, practice, design }) {
       S.session = {
         pid, created: Store.stamp(), startedWall: W(),
         timezone: Store.tzName(), tzOffset: Store.tzOffset(),
-        pilot: !!pilot, latinRow,
+        latinRow,
         // 順序一律由順序表帶出，不提供手動調整（2026-10-05 規格第 11 項）
         manualOrder: false,
         plan: plan.map((p, i) => ({ ...p, round: i + 1 })),
@@ -62,13 +61,12 @@ window.Session = (() => {
         timeMarks: design.timeMarks || [],
         restAfterRounds: design.restAfterRounds || [],
         practice, timerInfoSeconds: design.timerInfoSeconds || 10,
-        pilotEstimate: !!design.pilotEstimate,
         userAgent: navigator.userAgent, notes: [], pre: {}, post: {},
       };
       seenQ.clear();
       S.rounds = {}; S.events = []; S.answers = []; S.layouts = []; S.qRows = [];
       S.lastSaved = null; S.lastDownload = null;
-      log({ type: 'session_start', pid, pilot: !!pilot, latinRow,
+      log({ type: 'session_start', pid, latinRow,
         order: S.session.plan.map(p => p.passageId),
         screen_w: screen.width, screen_h: screen.height });
       persist();
@@ -83,8 +81,7 @@ window.Session = (() => {
         first_answer_s: null, last_answer_s: null, n_remove: 0, n_add: 0, n_wrong_to_right: 0, n_right_to_wrong: 0 };
       if (r !== 0) {
         const p = this.plan[r - 1];
-        Object.assign(rec, { pilotMean_s: p.pilotMean_s, passageTitle: p.passageTitle, words: p.words });
-        if (!this.isPilot()) rec.limit_s = p.limit_s;   // 前導不限時，不寫入時限
+        Object.assign(rec, { passageTitle: p.passageTitle, words: p.words, limit_s: p.limit_s });
       }
       S.rounds[r] = rec;
       log({ type: 'round_start', round: r, passageId: cfg.passageId });
@@ -136,11 +133,6 @@ window.Session = (() => {
       const e = log({ type: name, round: r, ...info });
       const rec = S.rounds[r];
       if (rec) rec[`t${name.split('_')[1]}_s`] = Math.round(info.t_ms || 0) / 1000;
-      return e;
-    },
-    estimate(r, info) {
-      const e = log({ type: 'estimate', round: r, ...info });
-      (S.rounds[r] = S.rounds[r] || { round: r }).est_s = info.est_s;
       return e;
     },
     trialEnd(r, info) {
