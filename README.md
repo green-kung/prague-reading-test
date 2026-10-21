@@ -138,7 +138,7 @@ type1A: { …, limit: 120 }
 pid, latin_row, round, text_type, form, passage_id, passage_title, words, limit_s,
 answers, correct_flags, correct, n_items, n_scored, accuracy, rt_s, end_reason,
 first_answer_s, last_answer_s, n_remove, n_add, n_wrong_to_right, n_right_to_wrong,
-nasa_mental, nasa_physical, nasa_temporal, nasa_performance, nasa_effort, nasa_frustration,
+nasa_mental, nasa_physical, nasa_temporal, nasa_performance, nasa_effort, nasa_frustration, nasa_rtlx,
 vasa_pos, vasa_moved, practice_rt_s, practice_words, wall_start, wall_end, overflow
 ```
 
@@ -299,7 +299,7 @@ passage_id, region, x, y, w, h
 | **螢幕實體寬度 `screenWidthMm`** | `design.js` 預設 531（24 吋 16:9）。只用來把 VAS-A 線長換算成實體公釐記在事件紀錄（預設約 299 公釐），不影響畫面與計分 | **使用者：到現場用尺量實驗螢幕「可視區」寬度（公釐）後填入** |
 | 情緒表達：EES | 2026-10-21 加入前測，接在 VAS-A 之後（Kring, Smith, & Neale, 1994, JPSP, 66, 934–949）。17 題，題目文字與順序照原文 Table 1（p.938）；6 點量表 1 = never true、6 = always true（p.936，中間 2–5 沒有文字錨點，只顯示數字）；第 2、3、4、7、9、10、11、12、15、16、17 題反向（7 − 分數），分數＝總分 `raw`（17–102）與平均 `mean`，存在 `session.json` 的 `pre.ees` 與 `questionnaires.csv`（`values` 是未反向的原始作答）。矩陣版面（題目在左、1–6 排成右側六欄），17 題一頁放得下不用捲動。⚠️ 原文沒有附指導語，畫面上那一句是本網站自擬 | — |
 | STAI 6 題 | 2026-10-11 起**不施測**（不在任何清單）；`materials.js` 的定義與 `stai-items.local.js` 載入先保留，要加回就把 `'stai'` 放回 `design.js` 的清單 | — |
-| NASA-TLX | 定義文字與 Hart (1986) NASA-TLX v1.0 手冊附錄 A 逐字一致（2026-10-12 對照手冊補正 Mental、Physical、Performance、Frustration 四題）（6 分量表、21 刻度、0–100、不做兩兩比較加權）。2026-10-12 起 6 題排成兩欄、每欄 3 題，一頁放得下不用捲動 | — |
+| NASA-TLX | 定義文字與 Hart (1986) NASA-TLX v1.0 手冊附錄 A 逐字一致（2026-10-12 對照手冊補正 Mental、Physical、Performance、Frustration 四題）（6 分量表、21 刻度、0–100、不做兩兩比較加權）。整體負荷用 **Raw TLX**：6 個分量表平均，存成 `rtlx`（summary 欄名 `nasa_rtlx`，0–100）；這是 Hart (2006) 所述的常見變體，不是原始 15 組兩兩比較的加權版（2026-10-21 決定）。2026-10-12 起 6 題排成兩欄、每欄 3 題，一頁放得下不用捲動 | — |
 | 同學量表 | `materials.js` 的 `peer` 插槽有 1 題示範題；預設不在 `roundQuestionnaires` 內，要啟用就把 `'peer'` 加進去 | 同學 |
 | 後測問卷 | `postQuestionnaires: []`（空清單；為空時結束畫面前自動略過） | 使用者 |
 | 拉丁方格順序表 | 預設 6 列 Williams 平衡（可整張換掉，見上） | 使用者 |

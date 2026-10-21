@@ -185,7 +185,7 @@ window.MATERIALS = {
 
     // NASA 任務負荷指標 (NASA Task Load Index, NASA-TLX)
     // 6 個分量表各一題，21 刻度（20 個等距區間），分數 0–100（每格 5 分）；
-    // 不做兩兩比較加權（沿用原型計分）。定義文字與 Hart (1986) NASA-TLX v1.0 手冊附錄 A 逐字一致
+    // 不做兩兩比較加權；整體負荷＝6 個分量表平均（Raw TLX，見下方 SCORING.nasa）。定義文字與 Hart (1986) NASA-TLX v1.0 手冊附錄 A 逐字一致
     // （2026-10-12 對照手冊第 13 頁補上 Mental／Physical 的 "etc."、Performance 的 "set by the experimenter (or yourself)"、Frustration 的 "relaxed and complacent"）。
     nasa: {
       title: 'Task Load',
@@ -294,10 +294,14 @@ window.SCORING = {
   vasa(values) {
     return { score: values[0] };
   },
+  // NASA-TLX：分量表 0–100（Hart & Staveland, 1988；Performance 0＝Good、100＝Poor，分數越高負荷越大）。
+  // 整體負荷用 Raw TLX（RTLX）：6 個分量表的平均，不做 15 組兩兩比較加權（Hart, 2006 所述的常見變體；2026-10-21 使用者決定）。
   nasa(answers, q) {
     const subscales = {};
     q.items.forEach((it, i) => { subscales[it.key] = answers[i] * 5; });   // 刻度 0–20 → 0–100
-    return { subscales, temporal: subscales.temporal };
+    const vals = Object.values(subscales);
+    const rtlx = Math.round(vals.reduce((s, v) => s + v, 0) / vals.length * 100) / 100;
+    return { subscales, rtlx, temporal: subscales.temporal };
   },
   stai(answers, q) {
     const raw = q.items.reduce((s, it, i) => s + (it.reverse ? 5 - answers[i] : answers[i]), 0);

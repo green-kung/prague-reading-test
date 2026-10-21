@@ -103,7 +103,7 @@ window.Store = (() => {
     return ['pid', 'latin_row', 'round', 'text_type', 'form', 'passage_id', 'passage_title', 'words', 'limit_s',
       'answers', 'correct_flags', 'correct', 'n_items', 'n_scored', 'accuracy', 'rt_s', 'end_reason',
       'first_answer_s', 'last_answer_s', 'n_remove', 'n_add', 'n_wrong_to_right', 'n_right_to_wrong',
-      'nasa_mental', 'nasa_physical', 'nasa_temporal', 'nasa_performance', 'nasa_effort', 'nasa_frustration',
+      'nasa_mental', 'nasa_physical', 'nasa_temporal', 'nasa_performance', 'nasa_effort', 'nasa_frustration', 'nasa_rtlx',
       'vasa_pos', 'vasa_moved', 'practice_rt_s', 'practice_words', 'wall_start', 'wall_end', 'overflow'];
   }
 
@@ -119,7 +119,7 @@ window.Store = (() => {
         (r.correctFlags || []).map(f => f === null || f === undefined ? 'NA' : (f ? 1 : 0)).join(' '),   // NA＝無解題
         r.correct, r.nItems, r.nScored, r.accuracy, r.rt_s, r.endReason,
         r.first_answer_s, r.last_answer_s, r.n_remove, r.n_add, r.n_wrong_to_right, r.n_right_to_wrong,
-        nasa.mental, nasa.physical, nasa.temporal, nasa.performance, nasa.effort, nasa.frustration,
+        nasa.mental, nasa.physical, nasa.temporal, nasa.performance, nasa.effort, nasa.frustration, (r.nasa || {}).rtlx,
         r.vasa_pos, r.vasa_moved === undefined ? null : (r.vasa_moved ? 1 : 0),
         isP ? r.practice_rt_s : '', isP ? r.practice_words : '',
         r.wall_start, r.wall_end, r.overflow]
