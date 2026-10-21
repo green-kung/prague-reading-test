@@ -213,6 +213,41 @@ window.MATERIALS = {
       ],
     },
 
+    // 情緒表達量表 (Emotional Expressivity Scale, EES; Kring, Smith, & Neale, 1994, JPSP, 66, 934–949)
+    // 17 題；題目文字與順序照 Table 1（p.938，題號後括號為原 40 題題庫的編號），(-) 為反向題：
+    // 第 2、3、4、7、9、10、11、12、15、16、17 題（共 11 題）。
+    // 作答 6 點量表：1 = never true、6 = always true（p.936；中間 2–5 原文沒有文字錨點，故只顯示數字）。
+    // 計分：反向題 7 − 分數，17 題加總（17–102），另給平均。
+    // ★ 原文沒有附指導語，intro 是本網站自擬。
+    // 版面：layout: 'matrix'＝題目在左、1–6 按鈕排成右側六欄，17 題一頁放得下、不用捲動。
+    ees: {
+      title: 'Emotional Expressivity',
+      intro: 'For each statement, choose how true it is of you, from 1 (never true) to 6 (always true).',
+      type: 'likert',
+      layout: 'matrix',
+      options: [{ v: 1, t: '1' }, { v: 2, t: '2' }, { v: 3, t: '3' }, { v: 4, t: '4' }, { v: 5, t: '5' }, { v: 6, t: '6' }],
+      low: 'Never true', high: 'Always true',
+      items: [
+        { no: 1, text: 'I think of myself as emotionally expressive.' },                          // 28
+        { no: 2, text: 'People think of me as an unemotional person.', reverse: true },           // 20
+        { no: 3, text: 'I keep my feelings to myself.', reverse: true },                          // 14
+        { no: 4, text: 'I am often considered indifferent by others.', reverse: true },           // 25
+        { no: 5, text: 'People can read my emotions.' },                                          // 23
+        { no: 6, text: 'I display my emotions to other people.' },                                // 18
+        { no: 7, text: 'I don\'t like to let other people see how I\'m feeling.', reverse: true }, // 22
+        { no: 8, text: 'I am able to cry in front of other people.' },                            // 26
+        { no: 9, text: 'Even if I am feeling very emotional, I don\'t let others see my feelings.', reverse: true },   // 27
+        { no: 10, text: 'Other people aren\'t easily able to observe what I\'m feeling.', reverse: true },             // 15
+        { no: 11, text: 'I am not very emotionally expressive.', reverse: true },                 // 16
+        { no: 12, text: 'Even when I\'m experiencing strong feelings, I don\'t express them outwardly.', reverse: true }, // 13
+        { no: 13, text: 'I can\'t hide the way I\'m feeling.' },                                  // 24
+        { no: 14, text: 'Other people believe me to be very emotional.' },                        // 33
+        { no: 15, text: 'I don\'t express my emotions to other people.', reverse: true },         // 6
+        { no: 16, text: 'The way I feel is different from how others think I feel.', reverse: true }, // 36
+        { no: 17, text: 'I hold my feelings in.', reverse: true },                                // 31
+      ],
+    },
+
     // ★ 2026-10-11 起狀態焦慮改用上面的 VAS-A，STAI 不在 design.js 任何清單裡；定義先保留，日後要加回只改 design.js。
     // 狀態焦慮量表 6 題短版 (State-Trait Anxiety Inventory – State, 6-item short form;
     // Marteau & Bekker, 1992)：原 STAI-S 第 1、3、6、15、16、17 題。
@@ -267,6 +302,11 @@ window.SCORING = {
   stai(answers, q) {
     const raw = q.items.reduce((s, it, i) => s + (it.reverse ? 5 - answers[i] : answers[i]), 0);
     return { raw, prorated: Math.round(raw * 20 / q.items.length * 10) / 10 };
+  },
+  // EES：answers 為 1–6；反向題 7 − 分數；raw＝17 題總分（17–102），mean＝平均（1–6）
+  ees(answers, q) {
+    const raw = q.items.reduce((s, it, i) => s + (it.reverse ? 7 - answers[i] : answers[i]), 0);
+    return { raw, mean: Math.round(raw / q.items.length * 100) / 100 };
   },
   // 同學量表：先給最簡單的總分與平均；正式計分方式由同學提供後替換
   peer(answers, q) {

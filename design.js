@@ -40,8 +40,8 @@ window.DESIGN = {
   // STAI（'stai'）2026-10-11 起不用，定義仍留在 materials.js；之後要加同學量表就把 'peer' 加進來。
   roundQuestionnaires: ['vasa', 'nasa'],
 
-  // 到場後、練習回合前（狀態焦慮基準）
-  preQuestionnaires: ['vasa'],
+  // 到場後、練習回合前：先 VAS-A（狀態焦慮基準），再 EES（情緒表達特質，2026-10-21 加入）
+  preQuestionnaires: ['vasa', 'ees'],
 
   // 全部回合之後（內容待決定，先留空；程式能處理空清單）
   postQuestionnaires: [],

@@ -44,7 +44,7 @@ Gazepoint GP3 在**同一台電腦**上由 Gazepoint 自己的軟體校正與錄
 ### 受試者（Start 之後，全英語）
 
 ```
-前測問卷（VAS-A 焦慮量表）
+前測問卷（VAS-A 焦慮量表 → EES 情緒表達量表 17 題）
   → Next → 練習回合（不限時、無計時器）→ 計時器說明畫面（約 10 秒）
   → Next → 回合 1（數字倒數）→ VAS-A → NASA-TLX
   → Next → 回合 2 → 量表 …
@@ -297,6 +297,7 @@ passage_id, region, x, y, w, h
 | 各篇時限 | 時限一律 120 秒（2 分鐘）；練習題不限時 | — |
 | 狀態焦慮：VAS-A | 2026-10-11 起改用電腦化焦慮視覺類比量表（Abend et al., 2014, p.448）：單題 “How anxious do you feel right now?”，水平線（**不照原文 100 公釐**，改用 1080 設計像素，整組置於畫面正中；計分是相對位置不受影響）、左 calm 右 anxious、游標起始在中點、不畫刻度不顯示數字；分數＝定位點到左端的相對距離四捨五入成 **0–30**（存在 `questionnaires.csv`），另存 `pos`（0–1；summary 用這個，欄名 `vasa_pos`）。本網站追加：至少點選或拖曳一次才能按 Next（記 `moved`、`first_move_ms`）。前測一次、每回合後第一個 | — |
 | **螢幕實體寬度 `screenWidthMm`** | `design.js` 預設 531（24 吋 16:9）。只用來把 VAS-A 線長換算成實體公釐記在事件紀錄（預設約 299 公釐），不影響畫面與計分 | **使用者：到現場用尺量實驗螢幕「可視區」寬度（公釐）後填入** |
+| 情緒表達：EES | 2026-10-21 加入前測，接在 VAS-A 之後（Kring, Smith, & Neale, 1994, JPSP, 66, 934–949）。17 題，題目文字與順序照原文 Table 1（p.938）；6 點量表 1 = never true、6 = always true（p.936，中間 2–5 沒有文字錨點，只顯示數字）；第 2、3、4、7、9、10、11、12、15、16、17 題反向（7 − 分數），分數＝總分 `raw`（17–102）與平均 `mean`，存在 `session.json` 的 `pre.ees` 與 `questionnaires.csv`（`values` 是未反向的原始作答）。矩陣版面（題目在左、1–6 排成右側六欄），17 題一頁放得下不用捲動。⚠️ 原文沒有附指導語，畫面上那一句是本網站自擬 | — |
 | STAI 6 題 | 2026-10-11 起**不施測**（不在任何清單）；`materials.js` 的定義與 `stai-items.local.js` 載入先保留，要加回就把 `'stai'` 放回 `design.js` 的清單 | — |
 | NASA-TLX | 定義文字與 Hart (1986) NASA-TLX v1.0 手冊附錄 A 逐字一致（2026-10-12 對照手冊補正 Mental、Physical、Performance、Frustration 四題）（6 分量表、21 刻度、0–100、不做兩兩比較加權）。2026-10-12 起 6 題排成兩欄、每欄 3 題，一頁放得下不用捲動 | — |
 | 同學量表 | `materials.js` 的 `peer` 插槽有 1 題示範題；預設不在 `roundQuestionnaires` 內，要啟用就把 `'peer'` 加進去 | 同學 |
