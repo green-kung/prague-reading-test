@@ -293,7 +293,7 @@ passage_id, region, x, y, w, h
 |---|---|---|
 | 正式文本 6 篇 | **已放入**（2026-10-08，原件 @Perry「考試閱讀實驗材料」，只放英文文章與題目，每篇 2 題）。對應：1 號→type1A、4 號→type1B、2 號→type2A、5 號→type2B、3 號→type3A、6 號→type3B | — |
 | 文本類型數與名稱 | 3 類＝答案結構：唯一解／多重解／無解（開始畫面顯示為 Single answer／Multiple answers／No answer，名稱在 `materials.js` 的 `textTypeLabels`）；A 篇＝說明文、B 篇＝論辯文 | — |
-| 練習文本 | 仍是示範文本（Why Bread Rises，2 題，`demo: true`） | 視需要 |
+| 練習文本 | Why Bread Rises（說明文，240 詞、2 題，四選一單一正解），2026-10-21 收進「考試閱讀實驗材料」的「練習文本」一節；改動時兩邊要一致 | — |
 | 各篇時限 | 時限一律 120 秒（2 分鐘）；練習題不限時 | — |
 | 狀態焦慮：VAS-A | 2026-10-11 起改用電腦化焦慮視覺類比量表（Abend et al., 2014, p.448）：單題 “How anxious do you feel right now?”，水平線（**不照原文 100 公釐**，改用 1080 設計像素，整組置於畫面正中；計分是相對位置不受影響）、左 calm 右 anxious、游標起始在中點、不畫刻度不顯示數字；分數＝定位點到左端的相對距離四捨五入成 **0–30**（存在 `questionnaires.csv`），另存 `pos`（0–1；summary 用這個，欄名 `vasa_pos`）。本網站追加：至少點選或拖曳一次才能按 Next（記 `moved`、`first_move_ms`）。前測一次、每回合後第一個 | — |
 | **螢幕實體寬度 `screenWidthMm`** | `design.js` 預設 531（24 吋 16:9）。只用來把 VAS-A 線長換算成實體公釐記在事件紀錄（預設約 299 公釐），不影響畫面與計分 | **使用者：到現場用尺量實驗螢幕「可視區」寬度（公釐）後填入** |

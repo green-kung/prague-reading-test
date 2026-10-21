@@ -6,7 +6,8 @@
 //
 // ★ 受試者畫面一律英語。
 // ★ 正式文本 6 篇來自研究者筆記庫的「考試閱讀實驗材料」（原件 @Perry，2026-10-08），只放英文版的文章與題目；
-//   中文版與解答說明不放進網站。正確答案以原件「設計總覽」表格為準。練習文本仍是示範文本。
+//   中文版與解答說明不放進網站。正確答案以原件「設計總覽」表格為準。
+//   練習文本 2026-10-21 起也收在同一份筆記的「練習文本」一節（說明文、四選一單一正解），兩邊須保持一致。
 
 window.MATERIALS = {
 
@@ -21,7 +22,7 @@ window.MATERIALS = {
   // limit: 秒  每篇的作答時限（2026-10-18 起全部 120 秒；舊版的寬鬆／緊迫兩種時限已取消）。
   //   未填（null）時開始畫面會顯示警告，該回合改為不限時。
   //   ⚠️ 目前的 120 是**演示用隨意設定的數字**（Claude 設定，非文獻或 meeting 依據）。
-  // demo: true 表示示範文本（目前只有練習文本）。
+  // demo: true 表示示範文本（目前沒有；練習文本 2026-10-21 起為正式材料）。
   // 每題：{ stem, opts: [4 個選項], ans }，選項索引 0＝A
   //   ans 為陣列＝可證成選項：[1] 唯一解（只勾 B 才對）；[0, 1] 多重解（A、B 都勾且不多勾才對）；
   //   [] 無解（沒有正解：correct 記空白、不計入 accuracy，但照常記錄選項與時間）。
@@ -29,9 +30,10 @@ window.MATERIALS = {
   passages: {
 
     // ── 練習文本（不限時、無計時器、不填量表；兼作閱讀速度與眼動基準）──────────
-    // 長度與正式文本相當（約 240 詞、4 段；2026-10-21 由 146 詞加長）、2 題（與正式文本題數相同）
+    // 長度與正式文本相當（240 詞、4 段；2026-10-21 由 146 詞加長）、2 題（與正式文本題數相同）
+    // 文本類型＝說明文，只用來取得閱讀速度，不納入文本類型比較（故不設 textType／form）
     practice: {
-      id: 'practice', title: 'Why Bread Rises', demo: true,
+      id: 'practice', title: 'Why Bread Rises',
       paras: [
         'Bread dough is a mixture of flour, water, salt and yeast. Yeast is a living organism, a single-celled fungus that feeds on the sugars in flour. As it feeds, it releases carbon dioxide, and it is this gas that makes the dough rise.',
         'The gas cannot escape easily. When dough is kneaded, the proteins in the flour link together into an elastic network called gluten, and this network traps the bubbles so that the dough slowly swells. Dough that has not been kneaded enough has a weak network, the gas escapes, and the loaf stays flat. This is why bakers knead dough for several minutes, stretching and folding it until it feels smooth and springy.',
