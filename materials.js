@@ -29,13 +29,14 @@ window.MATERIALS = {
   passages: {
 
     // ── 練習文本（不限時、無計時器、不填量表；兼作閱讀速度與眼動基準）──────────
-    // 長度約正式文本三分之二、2 題（與正式文本題數相同）
+    // 長度與正式文本相當（約 240 詞、4 段；2026-10-21 由 146 詞加長）、2 題（與正式文本題數相同）
     practice: {
       id: 'practice', title: 'Why Bread Rises', demo: true,
       paras: [
         'Bread dough is a mixture of flour, water, salt and yeast. Yeast is a living organism, a single-celled fungus that feeds on the sugars in flour. As it feeds, it releases carbon dioxide, and it is this gas that makes the dough rise.',
-        'The gas cannot escape easily. When dough is kneaded, the proteins in the flour link together into an elastic network called gluten, and this network traps the bubbles so that the dough slowly swells. Dough that has not been kneaded enough has a weak network, the gas escapes, and the loaf stays flat.',
+        'The gas cannot escape easily. When dough is kneaded, the proteins in the flour link together into an elastic network called gluten, and this network traps the bubbles so that the dough slowly swells. Dough that has not been kneaded enough has a weak network, the gas escapes, and the loaf stays flat. This is why bakers knead dough for several minutes, stretching and folding it until it feels smooth and springy.',
         'Temperature controls the speed of the process. Yeast works quickly in a warm kitchen and almost stops in a refrigerator. Some bakers use the cold on purpose: a slow rise overnight gives the bread more flavour, because other slower reactions in the dough continue while the yeast is held back.',
+        'The final rise happens in the oven. As the dough heats up, the trapped gas expands and the yeast briefly works faster, so the loaf grows quickly during the first few minutes of baking. Once the inside of the loaf reaches about 60 degrees Celsius, the yeast dies and the gluten and starch set into a firm structure. The holes left behind by the gas bubbles are what give the bread its soft, open texture.',
       ],
       questions: [
         { stem: 'According to the passage, what makes bread dough rise?', opts: ['Salt dissolving in the water', 'Water turning into steam', 'Carbon dioxide released by yeast', 'Gluten absorbing sugar'], ans: 2, kind: 'surface' },
