@@ -155,6 +155,37 @@ window.Store = (() => {
   // VAS-A：score＝0–30 整數；pos＝定位比例（0–1）、moved＝是否動過、first_move_ms＝第一次移動前的毫秒數（其他量表留空）
   const QUEST_COLS = ['pid', 'context', 'round', 'name', 'answers', 'values', 'score', 'pos', 'moved', 'first_move_ms', 'wall_time_tw', 'wall_time_cz'];
 
+  // 計分說明與逐題計分（2026-11-02）：
+  //   scoring.txt：這場用到的每份量表的計分規則與出處（文字取自 materials.js 各量表的 scoring）
+  //   ees.csv：EES 逐題一列（原始作答、是否反向、計分後的值），最後一列為總分與平均
+  function scoringFiles(d) {
+    const Q = (window.MATERIALS || {}).questionnaires || {};
+    const rows = d.qRows || [], pid = (d.session || {}).pid;
+    const used = [...new Set(rows.map(q => q.name))].filter(n => Q[n] && Q[n].scoring);
+    const out = [];
+    if (used.length) {
+      const txt = used.map(n => {
+        const q = Q[n];
+        return `## ${n}${q.title ? ` (${q.title})` : ''}\n` + q.scoring.map(l => `- ${l}`).join('\n');
+      }).join('\n\n');
+      out.push({ name: 'scoring.txt', text: '\uFEFF' + txt + '\n' });
+    }
+    const ees = rows.filter(q => q.name === 'ees');
+    if (ees.length && Q.ees) {
+      const items = Q.ees.items, lines = [];
+      ees.forEach(q => {
+        (q.values || []).forEach((v, i) => {
+          const it = items[i] || {}, rev = !!it.reverse;
+          lines.push([pid, q.context, it.no || i + 1, it.text || '', rev ? 1 : 0, v, rev ? 7 - v : v, '', '']);
+        });
+        const sc = q.score || {};
+        lines.push([pid, q.context, 'total', '', '', '', '', sc.raw, sc.mean]);
+      });
+      out.push({ name: 'ees.csv', text: '\uFEFF' + csv(['pid', 'context', 'item', 'text', 'reverse', 'response', 'scored', 'raw', 'mean'], lines) });
+    }
+    return out;
+  }
+
   function buildFiles(d) {
     const pid = (d.session || {}).pid;
     const flat = sc => {
@@ -175,6 +206,7 @@ window.Store = (() => {
            q.vas ? q.score.score : JSON.stringify(flat(q.score)),
            q.vas ? q.vas.pos : '', q.vas ? (q.vas.moved ? 1 : 0) : '', q.vas ? q.vas.firstMoveMs : '',
            ...twcz(q.wall_time)])) },
+      ...scoringFiles(d),
       { name: 'events.jsonl', text: (d.events || []).map(e => JSON.stringify(e)).join('\n') + '\n' },
       { name: 'session.json', text: JSON.stringify({ session: d.session, rounds: d.rounds }, null, 2) },
     ];

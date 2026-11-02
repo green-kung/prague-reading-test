@@ -181,6 +181,13 @@ window.MATERIALS = {
       type: 'vas',
       lengthPx: 1080,
       partitions: 30,
+      // scoring：寫進下載 zip 的 scoring.txt（給分析者看的計分說明）
+      scoring: [
+        'Source: Abend, Dan, Maoz, Raz, & Bar-Haim (2014), J. Behav. Ther. Exp. Psychiatry, 45, 447-453, p.448.',
+        'Single item "How anxious do you feel right now?"; horizontal line, left = calm, right = anxious; locator starts at the midpoint.',
+        'score = relative distance of the locator from the left end x 30, rounded to the nearest integer (0-30; higher = more anxious).',
+        'pos = the unrounded relative position (0-1, 4 decimals).',
+      ],
       items: [
         { key: 'anxiety', text: 'How anxious do you feel right now?', low: 'calm', high: 'anxious' },
       ],
@@ -194,6 +201,12 @@ window.MATERIALS = {
       title: 'Task Load',
       intro: 'Think about the round you have just finished. On each scale, click the point that best matches your experience.',
       type: 'tlx',
+      scoring: [
+        'Source: Hart & Staveland (1988); Hart (1986) NASA-TLX v1.0 manual; Hart (2006) for Raw TLX.',
+        'Six subscales (mental, physical, temporal, performance, effort, frustration), each a 21-tick scale (0-20) -> subscale = tick x 5 (0-100).',
+        'Performance: 0 = Good, 100 = Poor; for every subscale a higher score means higher workload.',
+        'Overall workload = Raw TLX (rtlx): mean of the six subscales (0-100). No pairwise-comparison weighting.',
+      ],
       items: [
         { key: 'mental', label: 'Mental Demand',
           text: 'How much mental and perceptual activity was required (e.g. thinking, deciding, calculating, remembering, looking, searching, etc.)? Was the task easy or demanding, simple or complex, exacting or forgiving?',
@@ -230,6 +243,14 @@ window.MATERIALS = {
       layout: 'matrix',
       options: [{ v: 1, t: '1' }, { v: 2, t: '2' }, { v: 3, t: '3' }, { v: 4, t: '4' }, { v: 5, t: '5' }, { v: 6, t: '6' }],
       low: 'Never true', high: 'Always true',
+      scoring: [
+        'Source: Kring, Smith, & Neale (1994), J. Pers. Soc. Psychol., 66, 934-949 (items: Table 1, p.938; response format: p.936).',
+        '17 items, rated 1 (never true) to 6 (always true).',
+        'Negatively keyed (reverse-scored) items: 2, 3, 4, 7, 9, 10, 11, 12, 15, 16, 17 -> scored = 7 - response.',
+        'Other items (1, 5, 6, 8, 13, 14): scored = response.',
+        'raw = sum of the 17 scored values (17-102; higher = more emotionally expressive); mean = raw / 17 (1-6).',
+        'Item-level responses and scored values are in ees.csv.',
+      ],
       items: [
         { no: 1, text: 'I think of myself as emotionally expressive.' },                          // 28
         { no: 2, text: 'People think of me as an unemotional person.', reverse: true },           // 20

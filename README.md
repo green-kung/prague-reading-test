@@ -133,6 +133,8 @@ type1A: { …, limit: 120 }
 | `answers.csv` | **每一次點選一列**：閱讀題、回合後量表、前後測問卷都算，含動作類型（`action`） |
 | `layout.csv` | **版面檢查**，每回合一列：是否全螢幕、縮放比例、視窗與螢幕尺寸（AOI 座標另見「AOI 座標表」） |
 | `questionnaires.csv` | 每份問卷一列：編號、場合（round／pretest／posttest）、回合、名稱、各題作答、計分值、分數、`pos`／`moved`／`first_move_ms`（只有 VAS-A 有值）、`wall_time_tw`／`wall_time_cz` |
+| `ees.csv` | **EES 逐題計分**（2026-11-02 起）：每題一列（題號、題目、`reverse` 是否反向、`response` 原始作答 1–6、`scored` 計分後的值＝反向題 7 − 作答），最後一列 `item = total` 給 `raw`（17–102）與 `mean` |
+| `scoring.txt` | **計分說明**：這場用到的每份量表（VAS-A、EES、NASA-TLX）的計分規則與文獻出處；文字來自 `materials.js` 各量表的 `scoring` |
 | `events.jsonl` | 所有事件；每筆都有 `client_ms`（毫秒時間戳）與 `wall_time`（含時區的 ISO 8601，到毫秒） |
 | `session.json` | 場次設定、回合順序、前後測分數、各回合完整結果 |
 
