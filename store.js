@@ -24,6 +24,25 @@ window.Store = (() => {
     const p = n => String(n).padStart(2, '0');
     return `${d.getFullYear()}${p(d.getMonth() + 1)}${p(d.getDate())}-${p(d.getHours())}${p(d.getMinutes())}${p(d.getSeconds())}`;
   }
+  // 同一時刻換算成指定時區的牆上時間（含該時區當下的 UTC 偏移，到毫秒）。
+  // 實驗在台灣與布拉格兩地做：CSV 的時間欄一律同時給台灣（Asia/Taipei，UTC+8、無夏令時間）
+  // 與捷克（Europe/Prague，冬令 UTC+1／夏令 UTC+2）兩欄；夏令時間由瀏覽器的時區資料庫自動判斷，
+  // 與這台電腦設定的時區無關（電腦時區設錯也不影響）。
+  const TZ = { tw: 'Asia/Taipei', cz: 'Europe/Prague' };
+  function wallIn(src, tz) {
+    if (src === undefined || src === null || src === '') return '';
+    const d = new Date(src);
+    if (isNaN(d)) return '';
+    const p = (n, w = 2) => String(n).padStart(w, '0');
+    const parts = Object.fromEntries(new Intl.DateTimeFormat('en-US', { timeZone: tz, hourCycle: 'h23',
+      year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' })
+      .formatToParts(d).map(x => [x.type, x.value]));
+    const asUtc = Date.UTC(+parts.year, +parts.month - 1, +parts.day, +parts.hour, +parts.minute, +parts.second);
+    const off = Math.round((asUtc - Math.floor(d.getTime() / 1000) * 1000) / 60000), sign = off < 0 ? '-' : '+';
+    return `${parts.year}-${parts.month}-${parts.day}T${parts.hour}:${parts.minute}:${parts.second}.${p(d.getMilliseconds(), 3)}`
+      + `${sign}${p(Math.floor(Math.abs(off) / 60))}:${p(Math.abs(off) % 60)}`;
+  }
+  const twcz = src => [wallIn(src, TZ.tw), wallIn(src, TZ.cz)];
   const tzName = () => { try { return Intl.DateTimeFormat().resolvedOptions().timeZone; } catch (e) { return ''; } };
   const tzOffset = () => wall().slice(-6);
 
@@ -104,7 +123,7 @@ window.Store = (() => {
       'answers', 'correct_flags', 'correct', 'n_items', 'n_scored', 'accuracy', 'rt_s', 'end_reason',
       'first_answer_s', 'last_answer_s', 'n_remove', 'n_add', 'n_wrong_to_right', 'n_right_to_wrong',
       'nasa_mental', 'nasa_physical', 'nasa_temporal', 'nasa_performance', 'nasa_effort', 'nasa_frustration', 'nasa_rtlx',
-      'vasa_pos', 'vasa_moved', 'practice_rt_s', 'practice_words', 'wall_start', 'wall_end', 'overflow'];
+      'vasa_pos', 'vasa_moved', 'practice_rt_s', 'practice_words', 'wall_start_tw', 'wall_start_cz', 'wall_end_tw', 'wall_end_cz', 'overflow'];
   }
 
   function summaryRows(d) {
@@ -122,19 +141,19 @@ window.Store = (() => {
         nasa.mental, nasa.physical, nasa.temporal, nasa.performance, nasa.effort, nasa.frustration, (r.nasa || {}).rtlx,
         r.vasa_pos, r.vasa_moved === undefined ? null : (r.vasa_moved ? 1 : 0),
         isP ? r.practice_rt_s : '', isP ? r.practice_words : '',
-        r.wall_start, r.wall_end, r.overflow]
+        ...twcz(r.wall_start), ...twcz(r.wall_end), r.overflow]
         .map(v => v === undefined || v === null ? '' : v);
     });
   }
 
   // answers.csv：一列＝受試者的一次點選（閱讀題、量表、前後測問卷都算）
   const ANSWER_COLS = ['pid', 'context', 'round', 'source', 'item', 'item_label', 'option', 'value',
-    'correct', 'action', 'prev_option', 't_ms', 'wall_time'];
+    'correct', 'action', 'prev_option', 't_ms', 'wall_time_tw', 'wall_time_cz'];
   // layout.csv：一列＝一個回合的版面檢查（AOI 座標改由 index.html?aoi 每篇匯出一份固定表）
   const LAYOUT_COLS = ['pid', 'round', 'passage_id', 'fullscreen', 'scale',
     'viewport_w', 'viewport_h', 'screen_w', 'screen_h'];
   // VAS-A：score＝0–30 整數；pos＝定位比例（0–1）、moved＝是否動過、first_move_ms＝第一次移動前的毫秒數（其他量表留空）
-  const QUEST_COLS = ['pid', 'context', 'round', 'name', 'answers', 'values', 'score', 'pos', 'moved', 'first_move_ms', 'wall_time'];
+  const QUEST_COLS = ['pid', 'context', 'round', 'name', 'answers', 'values', 'score', 'pos', 'moved', 'first_move_ms', 'wall_time_tw', 'wall_time_cz'];
 
   function buildFiles(d) {
     const pid = (d.session || {}).pid;
@@ -147,7 +166,7 @@ window.Store = (() => {
       { name: 'answers.csv', text: '﻿' + csv(ANSWER_COLS, (d.answers || []).map(a =>
           [pid, a.context, a.round, a.source, a.item, a.itemLabel, a.option, a.value,
            a.correct === null || a.correct === undefined ? '' : (a.correct ? 1 : 0),
-           a.action, a.prevOption, a.t_ms, a.wall_time])) },
+           a.action, a.prevOption, a.t_ms, ...twcz(a.wall_time)])) },
       { name: 'layout.csv', text: '﻿' + csv(LAYOUT_COLS, (d.layouts || []).map(l =>
           [pid, l.round, l.passageId, l.fullscreen ? 1 : 0, l.scale, l.viewport_w, l.viewport_h, l.screen_w, l.screen_h])) },
       { name: 'questionnaires.csv', text: '﻿' + csv(QUEST_COLS, (d.qRows || []).map(q =>
@@ -155,7 +174,7 @@ window.Store = (() => {
            (q.answers || []).join(' '), (q.values || []).join(' '),
            q.vas ? q.score.score : JSON.stringify(flat(q.score)),
            q.vas ? q.vas.pos : '', q.vas ? (q.vas.moved ? 1 : 0) : '', q.vas ? q.vas.firstMoveMs : '',
-           q.wall_time])) },
+           ...twcz(q.wall_time)])) },
       { name: 'events.jsonl', text: (d.events || []).map(e => JSON.stringify(e)).join('\n') + '\n' },
       { name: 'session.json', text: JSON.stringify({ session: d.session, rounds: d.rounds }, null, 2) },
     ];
@@ -215,7 +234,7 @@ window.Store = (() => {
     list().slice(MAX_KEPT).forEach(x => localStorage.removeItem(x.key));
   }
 
-  return { wall, stamp, tzName, tzOffset, csv, makeZip, download, buildFiles, summaryColumns, summaryRows,
+  return { wall, wallIn, stamp, tzName, tzOffset, csv, makeZip, download, buildFiles, summaryColumns, summaryRows,
            folderName, downloadSession, save, list, load, remove,
            downloadStored(key) { const d = load(key); return d ? downloadSession(d) : null; } };
 })();

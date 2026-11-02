@@ -21,7 +21,11 @@ Gazepoint GP3 在**同一台電腦**上由 Gazepoint 自己的軟體校正與錄
 本網站與 Gazepoint 靠**同一個系統時鐘**對齊：
 
 - 每一筆事件都記**含時區的牆上時間到毫秒**（例如 `2026-10-20T14:02:31.123+02:00`）。
-- `summary.csv` 每回合有 `wall_start`、`wall_end`。
+- `summary.csv` 每回合有開始／結束時間（`wall_start_*`、`wall_end_*`）。
+- **CSV 的時間欄一律同時給台灣與捷克兩欄**（`_tw`＝Asia/Taipei、`_cz`＝Europe/Prague，2026-11-02 起），由同一時刻換算，
+  與電腦設定的時區無關。台灣全年 UTC+8、無夏令時間；捷克冬令 UTC+1、夏令 UTC+2，由瀏覽器的時區資料庫自動判斷。
+  布拉格施測期 11/3–12/4 整段都是冬令時間（2026 夏令時間 10/25 已結束，下次 2027-03-28 才開始），偏移固定 `+01:00`，台灣比捷克快 7 小時。
+  `events.jsonl`、`session.json` 仍保留原始的 `wall_time`（這台電腦的本地時間＋偏移）與 `client_ms`。
 - 興趣區域（AOI）的座標**不在每場記錄**：版面固定在 1920×1080 舞台，同一篇文本人人位置相同，
   所以用 `index.html?aoi` **每篇匯出一份固定表**（見下方「AOI 座標表」）。每場的 `layout.csv` 只記每回合是否全螢幕、縮放比例，供事後確認畫面是原尺寸。
 
@@ -128,7 +132,7 @@ type1A: { …, limit: 120 }
 | `summary.csv` | 每回合一列（含練習的 `round = 0`）；欄位見下 |
 | `answers.csv` | **每一次點選一列**：閱讀題、回合後量表、前後測問卷都算，含動作類型（`action`） |
 | `layout.csv` | **版面檢查**，每回合一列：是否全螢幕、縮放比例、視窗與螢幕尺寸（AOI 座標另見「AOI 座標表」） |
-| `questionnaires.csv` | 每份問卷一列：編號、場合（round／pretest／posttest）、回合、名稱、各題作答、計分值、分數、`pos`／`moved`／`first_move_ms`（只有 VAS-A 有值）、牆上時間 |
+| `questionnaires.csv` | 每份問卷一列：編號、場合（round／pretest／posttest）、回合、名稱、各題作答、計分值、分數、`pos`／`moved`／`first_move_ms`（只有 VAS-A 有值）、`wall_time_tw`／`wall_time_cz` |
 | `events.jsonl` | 所有事件；每筆都有 `client_ms`（毫秒時間戳）與 `wall_time`（含時區的 ISO 8601，到毫秒） |
 | `session.json` | 場次設定、回合順序、前後測分數、各回合完整結果 |
 
@@ -139,7 +143,7 @@ pid, latin_row, round, text_type, form, passage_id, passage_title, words, limit_
 answers, correct_flags, correct, n_items, n_scored, accuracy, rt_s, end_reason,
 first_answer_s, last_answer_s, n_remove, n_add, n_wrong_to_right, n_right_to_wrong,
 nasa_mental, nasa_physical, nasa_temporal, nasa_performance, nasa_effort, nasa_frustration, nasa_rtlx,
-vasa_pos, vasa_moved, practice_rt_s, practice_words, wall_start, wall_end, overflow
+vasa_pos, vasa_moved, practice_rt_s, practice_words, wall_start_tw, wall_start_cz, wall_end_tw, wall_end_cz, overflow
 ```
 
 - **閱讀題計分**（正確答案見 `materials.js` 每題的 `ans`，以材料原件「設計總覽」表格為準）：
@@ -158,7 +162,7 @@ vasa_pos, vasa_moved, practice_rt_s, practice_words, wall_start, wall_end, overf
   - `n_remove`：取消次數＝改答次數；`n_add`：補選次數（`action = add` 的列數）。
   - `n_wrong_to_right`／`n_right_to_wrong`：該題點擊前後 `correct` 由錯變對／由對變錯的次數。
     沒有選項時以計分規則視為錯；**每題第一次點選（`first`）不算變化**（點之前還沒作答）；無解題不計入。
-- `wall_start`／`wall_end`：該回合開始／結束的牆上時間（含時區、到毫秒）。
+- `wall_start_tw`／`wall_start_cz`、`wall_end_tw`／`wall_end_cz`：該回合開始／結束時刻的台灣時間與捷克時間（各含當下 UTC 偏移、到毫秒）。
 - `vasa_pos`：該回合後 VAS-A 的定位比例（0–1，小數 4 位，0＝calm、1＝anxious）；`vasa_moved`：受試者有沒有動過滑桿（1／0；目前沒動過不能按 Next，所以恆為 1）。
   切成 30 等分的整數分數只留在 `questionnaires.csv`／`answers.csv`。
 - **練習列（`round = 0`）**：量表欄位留空；另有 `practice_rt_s`、`practice_words`。
@@ -169,7 +173,7 @@ vasa_pos, vasa_moved, practice_rt_s, practice_words, wall_start, wall_end, overf
 ### `answers.csv` 欄位
 
 ```
-pid, context, round, source, item, item_label, option, value, correct, action, prev_option, t_ms, wall_time
+pid, context, round, source, item, item_label, option, value, correct, action, prev_option, t_ms, wall_time_tw, wall_time_cz
 ```
 
 - `context`：`practice`／`round`／`pretest`／`posttest`。
