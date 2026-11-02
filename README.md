@@ -145,7 +145,7 @@ pid, latin_row, round, text_type, form, passage_id, passage_title, words, limit_
 answers, correct_flags, correct, n_items, n_scored, accuracy, rt_s, end_reason,
 first_answer_s, last_answer_s, n_remove, n_add, n_wrong_to_right, n_right_to_wrong,
 nasa_mental, nasa_physical, nasa_temporal, nasa_performance, nasa_effort, nasa_frustration, nasa_rtlx,
-vasa_pos, vasa_moved, practice_rt_s, practice_words, wall_start_tw, wall_start_cz, wall_end_tw, wall_end_cz, overflow
+vasa_pos, vasa_moved, ees_raw, ees_mean, pre_vasa_pos, pre_ees_raw, pre_ees_mean, practice_rt_s, practice_words, wall_start_tw, wall_start_cz, wall_end_tw, wall_end_cz, overflow
 ```
 
 - **閱讀題計分**（正確答案見 `materials.js` 每題的 `ans`，以材料原件「設計總覽」表格為準）：
@@ -167,6 +167,8 @@ vasa_pos, vasa_moved, practice_rt_s, practice_words, wall_start_tw, wall_start_c
 - `wall_start_tw`／`wall_start_cz`、`wall_end_tw`／`wall_end_cz`：該回合開始／結束時刻的台灣時間與捷克時間（各含當下 UTC 偏移、到毫秒）。
 - `vasa_pos`：該回合後 VAS-A 的定位比例（0–1，小數 4 位，0＝calm、1＝anxious）；`vasa_moved`：受試者有沒有動過滑桿（1／0；目前沒動過不能按 Next，所以恆為 1）。
   切成 30 等分的整數分數只留在 `questionnaires.csv`／`answers.csv`。
+- `ees_raw`／`ees_mean`：該回合後的 EES 總分（17–102）與平均（1–6）；目前 EES 只在前測，這兩欄留空，之後把 `'ees'` 加進 `roundQuestionnaires` 就會有值。
+- `pre_vasa_pos`、`pre_ees_raw`、`pre_ees_mean`：前測 VAS-A 定位比例與前測 EES 分數（2026-11-02 加入，讓分析只開 summary 就有全部分數）；同一位受試者每一列（含練習列）都重複同一個值。
 - **練習列（`round = 0`）**：量表欄位留空；另有 `practice_rt_s`、`practice_words`。
 - 不在 summary、改看其他檔：`manual_order`、`sec_per_word` 在 `session.json`；
   時間點事件（`time_50` 等）在 `events.jsonl`（`session.json` 各回合也有 `t50_s` 等）。

@@ -118,16 +118,24 @@ window.Store = (() => {
   // ── 由場次資料產生各個檔案 ──────────────────────────────────────────────────
   // D = { session, rounds, events, answers, layouts, qRows }
   // summary.csv：一列＝一個回合（含練習 round 0）。manual_order、時間點事件等只在 session.json／events.jsonl
+  // 量表分數一律也放進 summary（分析只開這張表）：
+  //   ees_raw／ees_mean＝該回合後的 EES（目前 EES 只在前測，這兩欄留空；之後放進 roundQuestionnaires 就有值）
+  //   pre_vasa_pos、pre_ees_raw、pre_ees_mean＝前測（個人基準／特質），同一位受試者每列都重複同一個值
   function summaryColumns() {
     return ['pid', 'latin_row', 'round', 'text_type', 'form', 'passage_id', 'passage_title', 'words', 'limit_s',
       'answers', 'correct_flags', 'correct', 'n_items', 'n_scored', 'accuracy', 'rt_s', 'end_reason',
       'first_answer_s', 'last_answer_s', 'n_remove', 'n_add', 'n_wrong_to_right', 'n_right_to_wrong',
       'nasa_mental', 'nasa_physical', 'nasa_temporal', 'nasa_performance', 'nasa_effort', 'nasa_frustration', 'nasa_rtlx',
-      'vasa_pos', 'vasa_moved', 'practice_rt_s', 'practice_words', 'wall_start_tw', 'wall_start_cz', 'wall_end_tw', 'wall_end_cz', 'overflow'];
+      'vasa_pos', 'vasa_moved', 'ees_raw', 'ees_mean', 'pre_vasa_pos', 'pre_ees_raw', 'pre_ees_mean',
+      'practice_rt_s', 'practice_words', 'wall_start_tw', 'wall_start_cz', 'wall_end_tw', 'wall_end_cz', 'overflow'];
   }
 
   function summaryRows(d) {
     const s = d.session || {}, rounds = d.rounds || {};
+    // 前測取自 qRows（session.pre 的 vasa 只存 0–30 整數，沒有定位比例 pos）
+    const preRow = name => (d.qRows || []).find(q => q.context === 'pretest' && q.name === name);
+    const preVas = preRow('vasa'), preEes = (preRow('ees') || {}).score || {};
+    const pre = [preVas && preVas.vas ? preVas.vas.pos : null, preEes.raw, preEes.mean];
     return Object.keys(rounds).map(Number).sort((a, b) => a - b).map(k => {
       const r = rounds[k];
       const nasa = (r.nasa || {}).subscales || {};
@@ -140,6 +148,7 @@ window.Store = (() => {
         r.first_answer_s, r.last_answer_s, r.n_remove, r.n_add, r.n_wrong_to_right, r.n_right_to_wrong,
         nasa.mental, nasa.physical, nasa.temporal, nasa.performance, nasa.effort, nasa.frustration, (r.nasa || {}).rtlx,
         r.vasa_pos, r.vasa_moved === undefined ? null : (r.vasa_moved ? 1 : 0),
+        (r.ees || {}).raw, (r.ees || {}).mean, ...pre,
         isP ? r.practice_rt_s : '', isP ? r.practice_words : '',
         ...twcz(r.wall_start), ...twcz(r.wall_end), r.overflow]
         .map(v => v === undefined || v === null ? '' : v);
