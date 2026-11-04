@@ -48,9 +48,9 @@ Gazepoint GP3 在**同一台電腦**上由 Gazepoint 自己的軟體校正與錄
 ### 受試者（Start 之後，全英語）
 
 ```
-前測問卷（VAS-A 焦慮量表 → EES 情緒表達量表 17 題）
+前測問卷（VAS-A 焦慮量表 → SAM 自評小人 → EES 情緒表達量表 17 題）
   → Next → 練習回合（不限時、無計時器）→ 計時器說明畫面（約 10 秒）
-  → Next → 回合 1（數字倒數）→ VAS-A → NASA-TLX
+  → Next → 回合 1（數字倒數）→ VAS-A → SAM → NASA-TLX
   → Next → 回合 2 → 量表 …
   → … → 回合 6 → 量表 → 後測問卷（清單為空則自動略過）
   → 結束畫面（自動下載資料）
@@ -173,6 +173,7 @@ vasa_pos, vasa_moved, ees_raw, ees_mean, pre_vasa_pos, pre_ees_raw, pre_ees_mean
 - `wall_start_tw`／`wall_start_cz`、`wall_end_tw`／`wall_end_cz`：該回合開始／結束時刻的台灣時間與捷克時間（各含當下 UTC 偏移、到毫秒）。
 - `vasa_pos`：該回合後 VAS-A 的定位比例（0–1，小數 4 位，0＝calm、1＝anxious）；`vasa_moved`：受試者有沒有動過滑桿（1／0；目前沒動過不能按 Next，所以恆為 1）。
   切成 30 等分的整數分數只留在 `questionnaires.csv`／`answers.csv`。
+- `sam_valence`／`sam_arousal`／`sam_dominance`：該回合後的 SAM 三個向度分數（各 1–9；9＝愉悅、激發、支配）。`pre_sam_*`＝前測 SAM，每列重複同一個值。
 - `ees_raw`／`ees_mean`：該回合後的 EES 總分（17–102）與平均（1–6）；目前 EES 只在前測，這兩欄留空，之後把 `'ees'` 加進 `roundQuestionnaires` 就會有值。
 - `pre_vasa_pos`、`pre_ees_raw`、`pre_ees_mean`：前測 VAS-A 定位比例與前測 EES 分數（2026-11-02 加入，讓分析只開 summary 就有全部分數）；同一位受試者每一列（含練習列）都重複同一個值。
 - **練習列（`round = 0`）**：量表欄位留空；另有 `practice_rt_s`、`practice_words`。
@@ -289,6 +290,27 @@ passage_id, region, x, y, w, h
 
 ## 待補材料
 
+### ★ SAM 小人圖檔（`sam/` 資料夾）
+
+來源：使用者提供的 `The-Self-Assessment-Manikin-SAM-adapted-with-permission-from-Bradley-and-Lang-1994.webp`
+（三排、每排 9 格＝5 個小人＋4 個圓圈格）。2026-11-04 依原圖格線裁成 27 張：
+
+```
+sam/valence-1.png … sam/valence-9.png      不愉悅 → 愉悅
+sam/arousal-1.png … sam/arousal-9.png      平靜 → 激發
+sam/dominance-1.png … sam/dominance-9.png  小（被控制）→ 大（掌控）
+```
+
+- 每格四周多留 6px：支配第 9 格的大小人在原圖就畫得比框大，不留邊會被切掉；第 1–8 格的外緣再塗白，避免沾到隔壁格的線。
+- 此圖三排都是**由左到右「低 → 高」**，所以 `materials.js` 的 `highEnd` 都是 `'right'`，分數＝點選位置（1–9）。
+- **畫面排法**（2026-11-04 依使用者參考圖改）：每排上方 5 個小人（用第 1、3、5、7、9 格，小人樣式不變），下方一排 **9 個圓圈**像尺一樣對齊——
+  1、3、5、7、9 在小人正下方，2、4、6、8 在兩個小人之間，受試者一看就知道可以選在兩個小人中間。
+  圓圈的可點範圍約 84 × 52 px（相鄰圓圈中心相距 105 px）；**點小人也可以**，等於選它正下方的圓圈，小人與圓圈同時標示。
+  滑過時淺色、選定時實心主色圓；沒點的那一排按 Finish 後整排標色。第 2、4、6、8 格（原圖的圓圈格）目前沒有用到。
+- **每排左側標題** Valence／Arousal／Dominance：原文 Figure 1（p.51）圖內沒有文字，向度名稱只在圖說「valence (top panel), arousal (middle panel), and dominance (bottom panel)」，採圖說用詞與上中下順序（內文另稱 pleasure）。
+- ⚠️ 原文 Figure 1 的愉悅排是「笑 → 皺眉」、激發排是「興奮 → 平靜」（由左到右）；使用者提供的改作圖檔這兩排左右相反。計分依實際使用的圖檔，論文方法請寫明呈現方向。
+- 圖檔載入失敗時格內顯示「向度 格號」文字，流程照常。
+
 ### ★ 版面容量（給寫文本的人）
 
 畫面固定 1920 × 1080、**不捲動**，所以材料長度有上限。六篇共用同一套排版（考試介面：全白底、左右分欄、計時器在上方工具列；文本欄內寬 904px、y 170–1040；文本 22px／行距 1.6／段距 10px），實測可容納：
@@ -311,6 +333,7 @@ passage_id, region, x, y, w, h
 | 各篇時限 | 時限一律 120 秒（2 分鐘）；練習題不限時 | — |
 | 狀態焦慮：VAS-A | 2026-10-11 起改用電腦化焦慮視覺類比量表（Abend et al., 2014, p.448）：單題 “How anxious do you feel right now?”，水平線（**不照原文 100 公釐**，改用 1080 設計像素，整組置於畫面正中；計分是相對位置不受影響）、左 calm 右 anxious、游標起始在中點、不畫刻度不顯示數字；分數＝定位點到左端的相對距離四捨五入成 **0–30**（存在 `questionnaires.csv`），另存 `pos`（0–1；summary 用這個，欄名 `vasa_pos`）。本網站追加：至少點選或拖曳一次才能按 Next（記 `moved`、`first_move_ms`）。前測一次、每回合後第一個 | — |
 | **螢幕實體寬度 `screenWidthMm`** | `design.js` 預設 531（24 吋 16:9）。只用來把 VAS-A 線長換算成實體公釐記在事件紀錄（預設約 299 公釐），不影響畫面與計分 | **使用者：到現場用尺量實驗螢幕「可視區」寬度（公釐）後填入** |
+| 情緒狀態：SAM | 2026-11-04 加入前測與每回合後，都緊接在 VAS-A 之後（Bradley & Lang, 1994, J. Behav. Ther. Exp. Psychiatry, 25, 49–59）。愉悅、激發、支配三排，每排 5 個小人，點小人或兩個小人之間 → 每向度 9 點（p.51）；作答畫面不顯示形容詞（2026-11-04 拿掉以減少干擾；原文的形容詞只用在口頭指導語，p.53、Table 1，Figure 1 圖內也沒有文字），引導句說明怎麼點。分數 1–9，**9＝愉悅（happy）、激發（excited）、支配（in control，小人最大）**；原文沒寫數字方向，依論文討論與 IAPS 慣例；使用的圖檔三排都是左低右高，分數＝點選位置。`questionnaires.csv` 的 `answers` 是點選位置（0–8，由左到右），`values` 是換算後的分數。一頁三排不用捲動。⚠️ 引導句是本網站自擬（原文是對圖片評分，這裡改成評「現在的感受」） | —（圖檔見下） |
 | 情緒表達：EES | 2026-10-21 加入前測，接在 VAS-A 之後（Kring, Smith, & Neale, 1994, JPSP, 66, 934–949）。17 題，題目文字與順序照原文 Table 1（p.938）；6 點量表 1 = never true、6 = always true（p.936，中間 2–5 沒有文字錨點，只顯示數字）；第 2、3、4、7、9、10、11、12、15、16、17 題反向（7 − 分數），分數＝總分 `raw`（17–102）與平均 `mean`，存在 `session.json` 的 `pre.ees` 與 `questionnaires.csv`（`values` 是未反向的原始作答）。矩陣版面（題目在左、1–6 排成右側六欄），17 題一頁放得下不用捲動。⚠️ 原文沒有附指導語，畫面上那一句是本網站自擬 | — |
 | STAI 6 題 | 2026-10-11 起**不施測**（不在任何清單）；`materials.js` 的定義與 `stai-items.local.js` 載入先保留，要加回就把 `'stai'` 放回 `design.js` 的清單 | — |
 | NASA-TLX | 定義文字與 Hart (1986) NASA-TLX v1.0 手冊附錄 A 逐字一致（2026-10-12 對照手冊補正 Mental、Physical、Performance、Frustration 四題）（6 分量表、21 刻度、0–100、不做兩兩比較加權）。整體負荷用 **Raw TLX**：6 個分量表平均，存成 `rtlx`（summary 欄名 `nasa_rtlx`，0–100）；這是 Hart (2006) 所述的常見變體，不是原始 15 組兩兩比較的加權版（2026-10-21 決定）。2026-10-12 起 6 題排成兩欄、每欄 3 題，一頁放得下不用捲動 | — |

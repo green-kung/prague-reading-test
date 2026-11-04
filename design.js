@@ -41,10 +41,10 @@ window.DESIGN = {
   // 每回合後依序出現（名稱對應 materials.js 的 questionnaires）。
   // VAS-A 放第一個：回合一結束先量焦慮，避免填 NASA 時焦慮已消退。
   // STAI（'stai'）2026-10-11 起不用，定義仍留在 materials.js；之後要加同學量表就把 'peer' 加進來。
-  roundQuestionnaires: ['vasa', 'nasa'],
+  roundQuestionnaires: ['vasa', 'sam', 'nasa'],
 
-  // 到場後、練習回合前：先 VAS-A（狀態焦慮基準），再 EES（情緒表達特質，2026-10-21 加入）
-  preQuestionnaires: ['vasa', 'ees'],
+  // 到場後、練習回合前：先 VAS-A（狀態焦慮基準）→ SAM（情緒狀態，2026-11-04 加入）→ EES（情緒表達特質，2026-10-21 加入）
+  preQuestionnaires: ['vasa', 'sam', 'ees'],
 
   // 全部回合之後（內容待決定，先留空；程式能處理空清單）
   postQuestionnaires: [],

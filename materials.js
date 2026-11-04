@@ -229,6 +229,54 @@ window.MATERIALS = {
       ],
     },
 
+    // 自評小人量表 (Self-Assessment Manikin, SAM; Bradley & Lang, 1994, J. Behav. Ther. Exp. Psychiatry, 25, 49–59)
+    // 三個向度：愉悅 (pleasure/valence)、激發 (arousal)、支配 (dominance)，各一排 5 個小人。
+    // 紙筆版：可點在任一個小人上或兩個小人之間 → 每個向度 9 點量表（p.51）；這裡兩個小人之間＝圓圈格。
+    // 原文指導語以語意差異量表的形容詞說明各端點（p.53 與 Table 1），下面 lowWords／highWords 照 Table 1 的配對留作紀錄；
+    //   2026-11-04 起作答畫面不顯示這些形容詞（減少干擾，也與原文 Figure 1 圖內無文字一致），只保留每排左側標題。
+    // 計分：每個向度 1–9，9＝愉悅（happy）、激發（excited）、支配（in control，小人最大）；
+    //   論文沒有寫數字方向，此方向依論文討論（嬰兒＝高支配、蛇＝低愉悅高激發低支配）與 IAPS 慣例。
+    // ★ 小人圖：使用者提供的圖檔（The-Self-Assessment-Manikin-SAM-adapted-with-permission-from-Bradley-and-Lang-1994.webp，
+    //   每排 9 格＝5 個小人＋4 個圓圈格），2026-11-04 依原圖格線裁成 27 張 sam/{向度}-{1–9}.png（每格四周多留 6px，
+    //   因為支配第 9 格的大小人畫得比框大）。畫面（2026-11-04 依使用者參考圖）：上排只放 5 個小人（第 1、3、5、7、9 格，
+    //   樣式不變），下排 9 個圓圈對齊（1、3、5、7、9 在小人正下方，2、4、6、8 在兩個小人之間）；圓圈與小人都可點。
+    //   此圖三排都是由左到右「低 → 高」：不愉悅→愉悅、平靜→激發、小（被控制）→大（掌控），所以 highEnd 都是 'right'。
+    // ★ 引導句（intro）是本網站自擬：原文是對圖片評分，這裡改成評「現在的感受」。
+    // 版面：一頁三排，不用捲動。每排左側標題 Valence／Arousal／Dominance（label）：
+    //   原文 Figure 1（p.51）圖內沒有文字，向度名稱只在圖說：「valence (top panel), arousal (middle panel), and dominance (bottom panel)」，
+    //   故採圖說用詞與上中下順序（內文另稱 pleasure）。
+    // ★ 方向：原文 Figure 1 愉悅排是「笑→皺眉」、激發排是「興奮→平靜」（由左到右），支配排「小→大」；
+    //   使用者提供的改作圖檔前兩排左右相反（不愉悅→愉悅、平靜→激發）。計分依實際使用的圖檔（highEnd 都是 right）。
+    sam: {
+      title: 'How You Feel Right Now',
+      intro: 'In each row, click the circle under the figure that best matches how you feel right now. If your feeling is between two figures, click the circle between them. Choose one circle in every row.',
+      type: 'sam',
+      points: 9,
+      items: [
+        { key: 'valence', label: 'Valence',
+          cells: [1, 2, 3, 4, 5, 6, 7, 8, 9].map(n => `sam/valence-${n}.png`),
+          highEnd: 'right',
+          highWords: 'happy, pleased, satisfied, contented, hopeful, relaxed',
+          lowWords: 'unhappy, annoyed, unsatisfied, melancholic, despairing, bored' },
+        { key: 'arousal', label: 'Arousal',
+          cells: [1, 2, 3, 4, 5, 6, 7, 8, 9].map(n => `sam/arousal-${n}.png`),
+          highEnd: 'right',
+          highWords: 'stimulated, excited, frenzied, jittery, wide-awake, aroused',
+          lowWords: 'relaxed, calm, sluggish, dull, sleepy, unaroused' },
+        { key: 'dominance', label: 'Dominance',
+          cells: [1, 2, 3, 4, 5, 6, 7, 8, 9].map(n => `sam/dominance-${n}.png`),
+          highEnd: 'right',
+          highWords: 'controlling, influential, in control, important, dominant, autonomous',
+          lowWords: 'controlled, influenced, cared-for, awed, submissive, guided' },
+      ],
+      scoring: [
+        'Source: Bradley & Lang (1994), J. Behav. Ther. Exp. Psychiatry, 25, 49-59 (9-point paper-and-pencil SAM, p.51; anchor words, p.53 and Table 1).',
+        'Three dimensions (valence, arousal, dominance), each a row of 5 figures with 9 circles underneath (one under each figure, one between each pair of figures); the respondent clicks one circle (or a figure = the circle under it) -> 9 positions.',
+        'pos = clicked position from left to right (1-9). score (1-9): 9 = happiest (valence), most excited (arousal), most in control / largest figure (dominance).',
+        'In this version all three rows run from low (left) to high (right), so score = pos.',
+      ],
+    },
+
     // 情緒表達量表 (Emotional Expressivity Scale, EES; Kring, Smith, & Neale, 1994, JPSP, 66, 934–949)
     // 17 題；題目文字與順序照 Table 1（p.938，題號後括號為原 40 題題庫的編號），(-) 為反向題：
     // 第 2、3、4、7、9、10、11、12、15、16、17 題（共 11 題）。
@@ -330,6 +378,10 @@ window.SCORING = {
   stai(answers, q) {
     const raw = q.items.reduce((s, it, i) => s + (it.reverse ? 5 - answers[i] : answers[i]), 0);
     return { raw, prorated: Math.round(raw * 20 / q.items.length * 10) / 10 };
+  },
+  // SAM：values＝各向度 1–9 分（已依 highEnd 換算，9＝愉悅／激發／支配）
+  sam(values, q) {
+    return Object.fromEntries(q.items.map((it, i) => [it.key, values[i]]));
   },
   // EES：answers 為 1–6；反向題 7 − 分數；raw＝17 題總分（17–102），mean＝平均（1–6）
   ees(answers, q) {

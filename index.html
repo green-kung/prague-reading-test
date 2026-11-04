@@ -137,6 +137,29 @@
   .mx-row button { height: 32px; font-size: 17px; border-radius: 8px; border: 1px solid var(--line);
     background: var(--soft); color: var(--ink); cursor: pointer; }
   .mx-row button.sel { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); font-weight: 600; }
+  /* SAM：上排 5 個小人、下排 9 個圓圈（1、3、5、7、9 在小人正下方，2、4、6、8 在兩個小人之間），像尺一樣；
+     圓圈與小人都可點（點小人＝選它正下方的圓圈）；一頁三排、不用捲動 */
+  #q-body.sam-body { overflow: hidden; display: flex; flex-direction: column; justify-content: space-evenly; padding-top: 4px; }
+  .sam-body .item { padding: 4px 0; border-bottom: none; }
+  .sam-body .item.missing { margin: 0; padding: 4px 0; border-radius: 12px; }
+  .sam-item { display: grid; grid-template-columns: 200px auto 200px; justify-content: center; align-items: start; }
+  .sam-label { grid-row: 1; align-self: start; margin-top: 53px; font-size: 24px; font-weight: 600; color: var(--ink); text-align: right; padding-right: 36px; }
+  .sam-main { grid-column: 2; }
+  .sam-row { display: flex; justify-content: center; gap: var(--sam-gap); }
+  .sam-fig { width: var(--sam-fig); height: 141px; padding: 0; border: 3px solid transparent; border-radius: 12px; background: #fff;
+    cursor: pointer; display: flex; align-items: center; justify-content: center; transition: border-color .1s, background .1s; }
+  .sam-fig img { width: 120px; height: 129px; display: block; pointer-events: none; mix-blend-mode: multiply; }
+  .sam-fig:hover { border-color: #b8c7d6; background: #f3f6f9; }
+  .sam-fig.sel { border-color: var(--accent); background: var(--accent-soft); }
+  .sam-ph { color: var(--muted); font-size: 15px; }
+  .sam-dots { position: relative; height: 52px; margin: 2px auto 0; }
+  .sam-dot { position: absolute; top: 0; width: 84px; height: 52px; margin-left: -42px; padding: 0; border: none; background: none;
+    cursor: pointer; display: flex; align-items: center; justify-content: center; border-radius: 26px; }
+  .sam-dot::before { content: ''; width: 30px; height: 30px; border-radius: 50%; border: 2px solid #64748b; background: #fff;
+    box-sizing: border-box; transition: all .1s; }
+  .sam-dot:hover { background: #f3f6f9; }
+  .sam-dot:hover::before { border-color: var(--accent); }
+  .sam-dot.sel::before { background: var(--accent); border-color: var(--accent); box-shadow: 0 0 0 5px var(--accent-soft); }
   /* NASA-TLX：6 題排成兩欄、每欄 3 題（左：1–3 題，右：4–6 題），一頁放得下、不用捲動；21 刻度量尺隨欄寬 */
   #q-body.tlx-grid { display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: repeat(3, auto);
     grid-auto-flow: column; column-gap: 64px; align-content: start; overflow: hidden; }
@@ -274,10 +297,10 @@
 </div>
 
 <!-- ?v＝版本號：每次推上正式站都要改，否則瀏覽器可能沿用快取的舊 js（GitHub Pages 快取 10 分鐘） -->
-<script src="materials.js?v=20261102b"></script>
+<script src="materials.js?v=20261104c"></script>
 <script src="stai-items.local.js" onerror="this.remove()"></script>  <!-- 本機專用 STAI 題目；GitHub 上沒有此檔，會維持佔位字 -->
-<script src="design.js?v=20261103"></script>
-<script src="store.js?v=20261102c"></script>
+<script src="design.js?v=20261104"></script>
+<script src="store.js?v=20261104"></script>
 <script src="session.js?v=20261102b"></script>
 <script>
 const M = window.MATERIALS, SC = window.SCORING, D = window.DESIGN;
@@ -703,6 +726,7 @@ function runQuestionnaires(st) {
     $('q-next').textContent = k === list.length - 1 ? 'Finish' : 'Next';
     $('q-body').scrollTop = 0;
     $('q-body').classList.toggle('tlx-grid', q.type === 'tlx');
+    $('q-body').classList.toggle('sam-body', q.type === 'sam');
     const matrix = q.type === 'likert' && q.layout === 'matrix';
     $('q-body').classList.toggle('lik-matrix', matrix);
     if (matrix) $('q-body').style.setProperty('--mx-n', q.options.length);
@@ -716,6 +740,24 @@ function runQuestionnaires(st) {
         return `<div class="vas" id="it${i}"><div class="vas-q">${it.text}</div>
           <div class="vas-track" id="vas-track" style="width:${vasL}px"><div class="vas-thumb" id="vas-thumb" style="left:${vasL / 2}px"></div></div>
           <div class="vas-ends" style="width:${vasL}px"><span>${it.low}</span><span>${it.high}</span></div></div>`;
+      }
+      if (q.type === 'sam') {
+        // 上排：5 個小人（原圖第 1、3、5、7、9 格，樣式不變）；下排：9 個圓圈，位置 0–8 由左到右，
+        // 偶數位置在小人正下方、奇數位置在兩個小人之間。點小人＝選它正下方的圓圈。圖檔載入失敗時顯示格號。
+        const F = 140, G = 70, W = 5 * F + 4 * G;                 // 小人寬、小人間距、整排寬
+        const xOf = j => (j / 2) * (F + G) + F / 2;               // 第 j 個位置的中心 x（相鄰圓圈相距 (F+G)/2）
+        const figs = [0, 2, 4, 6, 8].map(j => {
+          const src = (it.cells || [])[j];
+          return `<button class="sam-fig" data-i="${i}" data-v="${j}" aria-label="${it.key} ${j + 1}">`
+            + `<img src="${src}" alt="" onerror="this.outerHTML='<span class=&quot;sam-ph&quot;>${it.key} ${j + 1}</span>'"></button>`;
+        }).join('');
+        const dots = Array.from({ length: 9 }, (_, j) =>
+          `<button class="sam-dot" data-i="${i}" data-v="${j}" style="left:${xOf(j)}px" aria-label="${it.key} ${j + 1}"></button>`).join('');
+        // 左側標題（Valence／Arousal／Dominance），右側留同寬空欄讓小人置中
+        return `<div class="item sam-item" id="it${i}" style="--sam-fig:${F}px;--sam-gap:${G}px">
+          <div class="sam-label">${it.label}</div>
+          <div class="sam-main"><div class="sam-row">${figs}</div>
+          <div class="sam-dots" style="width:${W}px">${dots}</div></div></div>`;
       }
       if (q.type === 'tlx') {
         const ticks = Array.from({ length: 21 }, (_, j) =>
@@ -761,8 +803,12 @@ function runQuestionnaires(st) {
           t_ms: rel() });
       };
     }
-    const optionText = (i, v) => q.type === 'tlx' ? String(v) : ((q.items[i].options || q.options)[v] || {}).t;
-    const scoreValue = (i, v) => q.type === 'tlx' ? v : ((q.items[i].options || q.options)[v] || {}).v;
+    // SAM：位置 v（0–8，由左到右）→ 分數 1–9（9＝高分端，依 highEnd）
+    const samScore = (i, v) => q.items[i].highEnd === 'left' ? 9 - v : v + 1;
+    const optionText = (i, v) => q.type === 'tlx' ? String(v) : q.type === 'sam' ? `pos ${v + 1}`
+      : ((q.items[i].options || q.options)[v] || {}).t;
+    const scoreValue = (i, v) => q.type === 'tlx' ? v : q.type === 'sam' ? samScore(i, v)
+      : ((q.items[i].options || q.options)[v] || {}).v;
     // 量表的每一次點選也記一列（action：first／change／repeat）
     $('q-body').onclick = e => {
       const b = e.target.closest('button[data-i]');
@@ -770,7 +816,7 @@ function runQuestionnaires(st) {
       const i = +b.dataset.i, v = +b.dataset.v, prev = ans[i];
       ans[i] = v;
       $(`it${i}`).classList.remove('missing');
-      $(`it${i}`).querySelectorAll('button[data-i]').forEach(x => x.classList.toggle('sel', x === b));
+      $(`it${i}`).querySelectorAll('button[data-i]').forEach(x => x.classList.toggle('sel', +x.dataset.v === v));   // SAM：小人與其下方圓圈同時標示
       Session.questionnaireClick({ name, context: st.context, round: st.round, item: i + 1,
         itemLabel: q.items[i].key || q.items[i].label || (q.items[i].no !== undefined ? `item ${q.items[i].no}` : ''),
         optionText: optionText(i, v), value: scoreValue(i, v),
@@ -793,10 +839,10 @@ function runQuestionnaires(st) {
       const miss = ans.map((a, i) => a === null ? i : -1).filter(i => i >= 0);
       if (miss.length) {
         miss.forEach(i => $(`it${i}`).classList.add('missing'));
-        if (!matrix && q.type !== 'tlx') $(`it${miss[0]}`).scrollIntoView({ behavior: 'smooth', block: 'center' });   // 一頁式版面不捲動
+        if (!matrix && q.type !== 'tlx' && q.type !== 'sam') $(`it${miss[0]}`).scrollIntoView({ behavior: 'smooth', block: 'center' });   // 一頁式版面不捲動
         return;
       }
-      const values = q.type === 'tlx' ? ans : ans.map((a, i) => (q.items[i].options || q.options)[a].v);
+      const values = q.type === 'tlx' ? ans : ans.map((a, i) => scoreValue(i, a));
       const score = (SC[name] || SC.peer)(values, q);
       Session.questionnaireDone({ name, context: st.context, round: st.round, answers: ans, values, score, t_ms: rel() });
       k++;
