@@ -56,7 +56,7 @@ window.DESIGN = {
 
   // ── 4. 練習回合 ─────────────────────────────────────────────────────────────
   practicePassage: 'practice',   // 對應 materials.js 的 passages key
-  timerInfoSeconds: 10,          // 練習後「計時器說明畫面」停留秒數
+  timerInfoSeconds: 15,          // 練習後「計時器說明畫面」停留秒數
 
   // ── 4b. 休息點 ──────────────────────────────────────────────────────────────
   // 這些回合「之後」插入休息畫面：受試者畫面顯示 Please wait for the researcher.，

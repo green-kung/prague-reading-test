@@ -100,13 +100,17 @@
   .center .sub { font-size: 23px; line-height: 1.7; color: var(--muted); }
   .center .btn { font-size: 24px; padding: 16px 64px; letter-spacing: 2px; }
 
-  /* ── 計時器說明畫面（練習回合之後約 10 秒）：用工具列上同一個計時器示範倒數；說明文字在畫面中央，箭頭指向右上角計時器 ── */
+  /* ── 計時器說明畫面（練習回合之後約 15 秒）：用工具列上同一個計時器示範倒數；說明文字在畫面中央，箭頭指向右上角計時器 ── */
   #info-arrow { position: absolute; top: 14px; transform: translateX(-50%); text-align: center;
     font-size: 19px; color: var(--accent); line-height: 1.3; }
   #info-arrow .tip { font-size: 34px; display: block; }
   #info-text { position: absolute; left: 360px; top: 300px; width: 1200px; text-align: center;
     font-size: 30px; line-height: 1.7; }
   #info-text .sub { font-size: 21px; color: var(--muted); margin-top: 18px; line-height: 1.6; }
+  /* 時間到自動跳轉的提醒（2026-11-09 加入：受試者常被自動跳轉嚇到） */
+  #info-text .warn { font-size: 24px; line-height: 1.6; margin-top: 22px; padding: 16px 28px; border-radius: 12px;
+    background: var(--accent-soft); color: var(--ink); }
+  #info-text .warn b { color: var(--accent); }
 
   /* ── 量表 ── */
   #q-card { position: absolute; left: 40px; top: 20px; width: 1840px; height: 976px; display: flex; flex-direction: column; }
@@ -258,7 +262,9 @@
     <div id="info-arrow"><span class="tip">▲</span>here</div>
     <section id="info-text">
       During the test, the remaining time will be shown here.
-      <div class="sub">The clock counts down to zero. When it reaches zero, the round ends automatically and your answers are saved.</div>
+      <div class="sub">The clock counts down to zero.</div>
+      <div class="warn">When the time is up, the test screen will close <b>automatically</b> and the next screen will appear, even if you have not finished. This is normal. Your answers so far are saved.</div>
+      <div class="sub">This page will also close by itself when the clock reaches zero.</div>
     </section>
   </section>
 
@@ -300,7 +306,7 @@
 <!-- ?v＝版本號：每次推上正式站都要改，否則瀏覽器可能沿用快取的舊 js（GitHub Pages 快取 10 分鐘） -->
 <script src="materials.js?v=20261109"></script>
 <script src="stai-items.local.js" onerror="this.remove()"></script>  <!-- 本機專用 STAI 題目；GitHub 上沒有此檔，會維持佔位字 -->
-<script src="design.js?v=20261104"></script>
+<script src="design.js?v=20261109"></script>
 <script src="store.js?v=20261104"></script>
 <script src="session.js?v=20261102b"></script>
 <script>
@@ -675,7 +681,7 @@ function runTrial(r) {
   begin();
 }
 
-// ── 計時器說明畫面（練習之後約 10 秒，示範數字倒數）──
+// ── 計時器說明畫面（練習之後約 15 秒，示範數字倒數）──
 function runTimerInfo() {
   if (current) { current.stop(); current = null; }
   const total = (Session.state.session || {}).timerInfoSeconds || 10;
