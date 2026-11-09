@@ -102,6 +102,20 @@
   .center .sub .rule { margin: 28px auto 0; max-width: 1240px; padding: 18px 32px; border-radius: 12px;
     background: var(--accent-soft); color: var(--ink); font-size: 24px; line-height: 1.7; }
   .center .sub .rule b { color: var(--accent); }
+  /* 每回合前兩步驟圖示 */
+  .steps { display: flex; align-items: center; justify-content: center; gap: 40px; }
+  .step { width: 360px; display: flex; flex-direction: column; align-items: center; gap: 18px; padding: 26px 20px 22px;
+    border: 1px solid var(--line); border-radius: 16px; background: var(--card); }
+  .step .watch { width: 120px; height: 150px; display: block; }
+  .step .fake-btn { height: 150px; display: flex; align-items: center; }
+  .step .fake-btn::before { content: 'Next'; font-size: 24px; font-weight: 600; letter-spacing: 2px; color: #fff;
+    background: var(--accent); border-radius: 10px; padding: 16px 56px; }
+  .step .fake-btn { font-size: 0; position: relative; pointer-events: none; }
+  .step .fake-btn .ptr { position: absolute; left: 62%; top: 88px; width: 30px; height: 42px; }
+  .step-t { font-size: 22px; line-height: 1.5; color: var(--ink); }
+  .step-n { display: inline-flex; align-items: center; justify-content: center; width: 34px; height: 34px; margin-right: 10px;
+    border-radius: 50%; background: var(--accent); color: #fff; font-size: 19px; font-weight: 600; vertical-align: 2px; }
+  .step-arrow { font-size: 52px; color: var(--accent); }
   .center .btn { font-size: 24px; padding: 16px 64px; letter-spacing: 2px; }
 
   /* ── 計時器說明畫面（練習回合之後約 15 秒倒數，倒數完按 Next 才繼續）：用工具列上同一個計時器示範倒數；說明文字在畫面中央，箭頭指向右上角計時器 ── */
@@ -496,6 +510,28 @@ function runStage() {
 }
 
 // ── Next 畫面（受試者自己按）──
+// 每回合前的兩步驟圖示：① 研究者按受試者手錶側邊按鈕（主色標示）→ ② 受試者再按 Next（畫成跟真的按鈕一樣，但不能點）
+const WATCH_STEPS = `<div class="steps">
+  <div class="step">
+    <svg class="watch" viewBox="0 0 120 150" aria-hidden="true">
+      <rect x="38" y="4" width="44" height="34" rx="6" fill="#cbd5e1"/>
+      <rect x="38" y="112" width="44" height="34" rx="6" fill="#cbd5e1"/>
+      <rect x="22" y="30" width="76" height="90" rx="20" fill="#334155"/>
+      <rect x="31" y="40" width="58" height="70" rx="13" fill="#f8fafc"/>
+      <line x1="60" y1="75" x2="60" y2="56" stroke="#334155" stroke-width="4" stroke-linecap="round"/>
+      <line x1="60" y1="75" x2="73" y2="82" stroke="#334155" stroke-width="4" stroke-linecap="round"/>
+      <rect x="96" y="62" width="12" height="26" rx="4" fill="var(--accent)"/>
+      <path d="M114 66 l6 -5 M115 75 h7 M114 84 l6 5" stroke="var(--accent)" stroke-width="3" stroke-linecap="round"/>
+    </svg>
+    <div class="step-t"><span class="step-n">1</span>The researcher presses the button on your watch.</div>
+  </div>
+  <div class="step-arrow" aria-hidden="true">&#10142;</div>
+  <div class="step">
+    <div class="fake-btn" aria-hidden="true">Next<svg class="ptr" viewBox="0 0 24 34"><path d="M2 2 L2 26 L8 20 L12 31 L16.5 29 L12.5 18.5 L21 18.5 Z" fill="#fff" stroke="#0f172a" stroke-width="2" stroke-linejoin="round"/></svg></div>
+    <div class="step-t"><span class="step-n">2</span>After that, you press “Next”.</div>
+  </div>
+</div>`;
+
 function showNext(st) {
   if (current) { current.stop(); current = null; }
   setRound(null);
@@ -511,7 +547,8 @@ function showNext(st) {
   } else {
     $('msg-big').textContent = `Round ${st.round} of ${Session.total}`;
     // 2026-11-09：研究者先按受試者手錶上的按鈕（標記時間），受試者再按 Next
-    $('msg-sub').innerHTML = 'The researcher will press the button on your watch. After the researcher has pressed it, press “Next”.'
+    // 2026-11-09：兩步驟圖示（① 研究者按手錶 → ② 受試者按 Next），手錶為自繪 SVG
+    $('msg-sub').innerHTML = WATCH_STEPS
       + '<div class="rule">Remember: each question may have one, several, or no correct options. If none is correct, do not select any.</div>';
   }
   $('msg-next').textContent = 'Next';
