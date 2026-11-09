@@ -245,6 +245,8 @@ window.MATERIALS = {
     // 版面：一頁三排，不用捲動。每排左側標題 Valence／Arousal／Dominance（label）：
     //   原文 Figure 1（p.51）圖內沒有文字，向度名稱只在圖說：「valence (top panel), arousal (middle panel), and dominance (bottom panel)」，
     //   故採圖說用詞與上中下順序（內文另稱 pleasure）。
+    // ★ desc（2026-11-09 加入，本網站自擬）：多數受試者不懂 Valence／Arousal／Dominance，每排標題下方加一句簡易英文說明
+    //   （含左右兩端代表什麼，用詞取自論文 p.53 的錨點形容詞）。不影響計分。
     // ★ 方向：原文 Figure 1 愉悅排是「笑→皺眉」、激發排是「興奮→平靜」（由左到右），支配排「小→大」；
     //   使用者提供的改作圖檔前兩排左右相反（不愉悅→愉悅、平靜→激發）。計分依實際使用的圖檔（highEnd 都是 right）。
     sam: {
@@ -254,16 +256,19 @@ window.MATERIALS = {
       points: 9,
       items: [
         { key: 'valence', label: 'Valence',
+          desc: 'How pleasant you feel: from unhappy (left) to happy (right).',
           cells: [1, 2, 3, 4, 5, 6, 7, 8, 9].map(n => `sam/valence-${n}.png`),
           highEnd: 'right',
           highWords: 'happy, pleased, satisfied, contented, hopeful, relaxed',
           lowWords: 'unhappy, annoyed, unsatisfied, melancholic, despairing, bored' },
         { key: 'arousal', label: 'Arousal',
+          desc: 'How energized you feel: from calm or sleepy (left) to excited or wide\u2011awake (right).',
           cells: [1, 2, 3, 4, 5, 6, 7, 8, 9].map(n => `sam/arousal-${n}.png`),
           highEnd: 'right',
           highWords: 'stimulated, excited, frenzied, jittery, wide-awake, aroused',
           lowWords: 'relaxed, calm, sluggish, dull, sleepy, unaroused' },
         { key: 'dominance', label: 'Dominance',
+          desc: 'How much in control you feel: from controlled by others (left) to in control (right).',
           cells: [1, 2, 3, 4, 5, 6, 7, 8, 9].map(n => `sam/dominance-${n}.png`),
           highEnd: 'right',
           highWords: 'controlling, influential, in control, important, dominant, autonomous',
@@ -274,6 +279,7 @@ window.MATERIALS = {
         'Three dimensions (valence, arousal, dominance), each a row of 5 figures with 9 circles underneath (one under each figure, one between each pair of figures); the respondent clicks one circle (or a figure = the circle under it) -> 9 positions.',
         'pos = clicked position from left to right (1-9). score (1-9): 9 = happiest (valence), most excited (arousal), most in control / largest figure (dominance).',
         'In this version all three rows run from low (left) to high (right), so score = pos.',
+        'Note: each row showed a short explanation written for this website under its label (valence: unhappy -> happy; arousal: calm or sleepy -> excited or wide-awake; dominance: controlled by others -> in control); it is not part of the original SAM.',
       ],
     },
 

@@ -142,8 +142,9 @@
   #q-body.sam-body { overflow: hidden; display: flex; flex-direction: column; justify-content: space-evenly; padding-top: 4px; }
   .sam-body .item { padding: 4px 0; border-bottom: none; }
   .sam-body .item.missing { margin: 0; padding: 4px 0; border-radius: 12px; }
-  .sam-item { display: grid; grid-template-columns: 200px auto 200px; justify-content: center; align-items: start; }
+  .sam-item { display: grid; grid-template-columns: 300px auto 300px; justify-content: center; align-items: start; }
   .sam-label { grid-row: 1; align-self: start; margin-top: 53px; font-size: 24px; font-weight: 600; color: var(--ink); text-align: right; padding-right: 36px; }
+  .sam-desc { display: block; margin-top: 8px; font-size: 17px; font-weight: 400; line-height: 1.4; color: var(--muted); }
   .sam-main { grid-column: 2; }
   .sam-row { display: flex; justify-content: center; gap: var(--sam-gap); }
   .sam-fig { width: var(--sam-fig); height: 141px; padding: 0; border: 3px solid transparent; border-radius: 12px; background: #fff;
@@ -297,7 +298,7 @@
 </div>
 
 <!-- ?v＝版本號：每次推上正式站都要改，否則瀏覽器可能沿用快取的舊 js（GitHub Pages 快取 10 分鐘） -->
-<script src="materials.js?v=20261104c"></script>
+<script src="materials.js?v=20261109"></script>
 <script src="stai-items.local.js" onerror="this.remove()"></script>  <!-- 本機專用 STAI 題目；GitHub 上沒有此檔，會維持佔位字 -->
 <script src="design.js?v=20261104"></script>
 <script src="store.js?v=20261104"></script>
@@ -755,7 +756,7 @@ function runQuestionnaires(st) {
           `<button class="sam-dot" data-i="${i}" data-v="${j}" style="left:${xOf(j)}px" aria-label="${it.key} ${j + 1}"></button>`).join('');
         // 左側標題（Valence／Arousal／Dominance），右側留同寬空欄讓小人置中
         return `<div class="item sam-item" id="it${i}" style="--sam-fig:${F}px;--sam-gap:${G}px">
-          <div class="sam-label">${it.label}</div>
+          <div class="sam-label">${it.label}${it.desc ? `<span class="sam-desc">${it.desc}</span>` : ''}</div>
           <div class="sam-main"><div class="sam-row">${figs}</div>
           <div class="sam-dots" style="width:${W}px">${dots}</div></div></div>`;
       }
