@@ -445,14 +445,9 @@ function renderSetup() {
   const r = expandOrder(pid);
   draft = r;
   if (!r) { $('order-box').innerHTML = ''; $('order-note').textContent = ''; $('start-btn').disabled = true; return; }
-  let h = '<table><tr><th>Round</th><th>Text type</th><th>Title</th><th>Time limit</th></tr>';
-  r.plan.forEach((p, i) => {
-    h += `<tr><td class="mono">${i + 1}</td><td>${typeLabel(p.textType)} (${p.form})</td>
-      <td title="${p.passageTitle}">${p.passageTitle}</td>
-      <td class="mono">${p.limit_s == null ? '⚠ Not set' : p.limit_s + ' s'}</td></tr>`;
-  });
-  h += '</table>';
-  $('order-box').innerHTML = h;
+  // 受試者可能瞄到開始畫面（2026-11-09）：不顯示各回合的文本類型／篇名／時限表，避免透露哪幾回合是單選、多選、無解。
+  // 順序照 design.js 的 latinSquare 展開，實際順序記在資料檔（summary.csv 的 passage_id 等欄）。
+  $('order-box').innerHTML = '';
   const rest = (D.restAfterRounds || []).filter(x => x < r.plan.length);
   $('order-note').textContent = `ID ${pid} → order row ${r.latinRow} (the order comes from the configuration and cannot be changed here; edit latinSquare in design.js to change it)`
     + (rest.length ? ` | Breaks: after round ${rest.join(', ')} (researcher presses Shift + Enter to continue)` : '');
