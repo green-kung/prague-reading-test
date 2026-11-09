@@ -98,6 +98,10 @@
     gap: 34px; text-align: center; padding: 0 240px; }
   .center .big { font-size: 36px; line-height: 1.6; color: var(--ink); letter-spacing: .5px; }
   .center .sub { font-size: 23px; line-height: 1.7; color: var(--muted); }
+  /* 作答規則（練習前完整說明；每回合前短提醒） */
+  .center .sub .rule { margin: 28px auto 0; max-width: 1240px; padding: 18px 32px; border-radius: 12px;
+    background: var(--accent-soft); color: var(--ink); font-size: 24px; line-height: 1.7; }
+  .center .sub .rule b { color: var(--accent); }
   .center .btn { font-size: 24px; padding: 16px 64px; letter-spacing: 2px; }
 
   /* ── 計時器說明畫面（練習回合之後約 15 秒倒數，倒數完按 Next 才繼續）：用工具列上同一個計時器示範倒數；說明文字在畫面中央，箭頭指向右上角計時器 ── */
@@ -499,10 +503,16 @@ function showNext(st) {
   $('msg-next').style.display = '';
   if (st.practice) {
     $('msg-big').textContent = 'Practice round';
-    $('msg-sub').textContent = 'You will read a short text and answer a few questions. There is no time limit in this round.';
+    // 2026-11-09：作答規則（每題可能一個、多個或沒有正解；無解＝不選）寫在練習前，取代口頭說明
+    $('msg-sub').innerHTML = 'You will read a short text and answer a few questions. There is no time limit in this round.'
+      + '<div class="rule">For each question, <b>one</b>, <b>more than one</b>, or <b>none</b> of the options may be correct.<br>'
+      + 'Select <b>all</b> the options you think are correct. If you think none of them is correct, do not select any.<br>'
+      + 'Click an option again to unselect it.</div>';
   } else {
     $('msg-big').textContent = `Round ${st.round} of ${Session.total}`;
-    $('msg-sub').textContent = 'Please wait for the instruction, then press “Next”.';
+    // 2026-11-09：研究者先按受試者手錶上的按鈕（標記時間），受試者再按 Next
+    $('msg-sub').innerHTML = 'The researcher will press the button on your watch. After the researcher has pressed it, press “Next”.'
+      + '<div class="rule">Remember: each question may have one, several, or no correct options. If none is correct, do not select any.</div>';
   }
   $('msg-next').textContent = 'Next';
   $('msg-next').onclick = () => { Session.log({ type: 'next_pressed', round: st.round }); nextStage(); };
