@@ -100,7 +100,7 @@
   .center .sub { font-size: 23px; line-height: 1.7; color: var(--muted); }
   .center .btn { font-size: 24px; padding: 16px 64px; letter-spacing: 2px; }
 
-  /* ── 計時器說明畫面（練習回合之後約 15 秒）：用工具列上同一個計時器示範倒數；說明文字在畫面中央，箭頭指向右上角計時器 ── */
+  /* ── 計時器說明畫面（練習回合之後約 15 秒倒數，倒數完按 Next 才繼續）：用工具列上同一個計時器示範倒數；說明文字在畫面中央，箭頭指向右上角計時器 ── */
   #info-arrow { position: absolute; top: 14px; transform: translateX(-50%); text-align: center;
     font-size: 19px; color: var(--accent); line-height: 1.3; }
   #info-arrow .tip { font-size: 34px; display: block; }
@@ -111,6 +111,7 @@
   #info-text .warn { font-size: 24px; line-height: 1.6; margin-top: 22px; padding: 16px 28px; border-radius: 12px;
     background: var(--accent-soft); color: var(--ink); }
   #info-text .warn b { color: var(--accent); }
+  #info-next { margin-top: 36px; font-size: 24px; padding: 16px 64px; letter-spacing: 2px; }
 
   /* ── 量表 ── */
   #q-card { position: absolute; left: 40px; top: 20px; width: 1840px; height: 976px; display: flex; flex-direction: column; }
@@ -264,7 +265,8 @@
       During the test, the remaining time will be shown here.
       <div class="sub">The clock counts down to zero.</div>
       <div class="warn">When the time is up, the test screen will close <b>automatically</b> and the next screen will appear, even if you have not finished. This is normal. Your answers so far are saved.</div>
-      <div class="sub">This page will also close by itself when the clock reaches zero.</div>
+      <div class="sub">When the clock on this page reaches zero, press Next to continue.</div>
+      <button class="btn primary" id="info-next" disabled>Next</button>
     </section>
   </section>
 
@@ -681,7 +683,7 @@ function runTrial(r) {
   begin();
 }
 
-// ── 計時器說明畫面（練習之後約 15 秒，示範數字倒數）──
+// ── 計時器說明畫面（練習之後約 15 秒，示範數字倒數；倒數完按 Next 才進下一頁）──
 function runTimerInfo() {
   if (current) { current.stop(); current = null; }
   const total = (Session.state.session || {}).timerInfoSeconds || 10;
@@ -698,11 +700,22 @@ function runTimerInfo() {
     if (fired) return;
     const remain = total * 1000 - (performance.now() - t0);
     $('timer-num').textContent = fmt(Math.max(0, Math.ceil(remain / 1000)));
-    if (remain <= 0) { fired = true; Session.log({ type: 'timer_info_done' }); nextStage(); return; }
-    requestAnimationFrame(tick);
+    // 倒數到 0 不自動跳轉（2026-11-09）：Next 按鈕才啟用，受試者自己按才進下一頁
+    if (remain <= 0) {
+      fired = true; clearInterval(guard); Session.log({ type: 'timer_info_done' });
+      $('info-next').disabled = false;
+      $('info-next').onclick = () => {
+        $('info-next').onclick = null; $('info-next').disabled = true;
+        Session.log({ type: 'timer_info_next', t_ms: Math.round(performance.now() - t0) });
+        nextStage();
+      };
+    }
   };
-  tick();
-  current = { stop: () => { fired = true; } };
+  const step = () => { tick(); if (!fired) requestAnimationFrame(step); };
+  $('info-next').disabled = true; $('info-next').onclick = null;
+  const guard = setInterval(tick, 200);   // 頁框暫停重繪時，倒數到 0 仍會啟用 Next
+  step();
+  current = { stop: () => { fired = true; clearInterval(guard); $('info-next').onclick = null; } };
 }
 
 // ── 量表 ──
